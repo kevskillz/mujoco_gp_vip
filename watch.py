@@ -22,10 +22,9 @@ venv.norm_reward = False
 model = PPO.load(MODEL_PATH, env=venv)
 
 obs = venv.reset()
-for _ in range(2000):
+while True:
     action, _ = model.predict(obs, deterministic=True)
     obs, reward, done, info = venv.step(action)
-    # time.sleep(1/60)
     if done:
         obs = venv.reset()
 
