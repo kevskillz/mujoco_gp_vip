@@ -1,0 +1,24 @@
+---------------------------------------
+Begin Slurm Prolog: Feb-13-2026 11:11:59
+Job ID:    4075477
+User ID:   adantuluri7
+Account:   coc
+Job name:  ppo_halfcheetah_eval
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+Starting evaluation at Fri Feb 13 11:12:00 EST 2026
+Running on atl1-1-03-012-18-0.pace.gatech.edu
+Finished at Fri Feb 13 11:13:31 EST 2026
+---------------------------------------
+Begin Slurm Epilog: Feb-13-2026 11:13:31
+Job ID:        4075477
+User ID:       adantuluri7
+Account:       coc
+Job name:      ppo_halfcheetah_eval
+Resources:     cpu=2,mem=8G,node=1
+Rsrc Used:     cput=00:03:04,vmem=0,walltime=00:01:32,mem=803124K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-012-18-0
+---------------------------------------

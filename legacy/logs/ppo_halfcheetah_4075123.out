@@ -1,0 +1,24 @@
+---------------------------------------
+Begin Slurm Prolog: Feb-13-2026 00:26:37
+Job ID:    4075123
+User ID:   adantuluri7
+Account:   coc
+Job name:  ppo_halfcheetah
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+Starting training at Fri Feb 13 00:26:38 EST 2026
+Running on atl1-1-03-010-10-0.pace.gatech.edu
+Finished at Fri Feb 13 00:26:38 EST 2026
+---------------------------------------
+Begin Slurm Epilog: Feb-13-2026 00:26:39
+Job ID:        4075123
+User ID:       adantuluri7
+Account:       coc
+Job name:      ppo_halfcheetah
+Resources:     cpu=8,gres/gpu:h100=1,mem=32G,node=1
+Rsrc Used:     cput=00:00:08,vmem=0,walltime=00:00:01,mem=8872K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-010-10-0
+---------------------------------------
