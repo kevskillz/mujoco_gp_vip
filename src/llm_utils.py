@@ -155,7 +155,7 @@ def submit_mixtral_hf(txt2mixtral, max_new_tokens=1024, top_p=0.15, temperature=
         Model's output from inference
     """    
     max_new_tokens = np.random.randint(900, 1300)
-    os.environ['HUGGINGFACE_HUB_TOKEN'] = "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"
+    os.environ['HUGGINGFACE_HUB_TOKEN'] = "Your HF Token here"
     huggingface_hub.login(new_session=False)
     client = InferenceClient(model=model_id)
     client.headers["x-use-cache"] = "0"
