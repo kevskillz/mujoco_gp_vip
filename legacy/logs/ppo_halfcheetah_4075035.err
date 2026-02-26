@@ -1,2 +1,2 @@
-/var/lib/slurm/slurmd/job4075035/slurm_script: line 24: /home/hice1/adantuluri7/venvs/rl/bin/activate: No such file or directory
-python: can't open file '/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/train_halfcheetah.py': [Errno 2] No such file or directory
+/var/lib/slurm/slurmd/job4075035/slurm_script: line 24: /home/hice1/klobo8/venvs/rl/bin/activate: No such file or directory
+python: can't open file '/storage/ice1/1/9/klobo8/mujoco_gp_vip/train_halfcheetah.py': [Errno 2] No such file or directory

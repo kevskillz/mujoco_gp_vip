@@ -34,7 +34,12 @@ def retrieve_base_code(idx):
 
 def clean_code_from_llm(code_from_llm):
     """Cleans the code received from LLM."""
-    return '\n'.join(code_from_llm.strip().split("```")[1].split('\n')[1:]).strip()
+    parts = code_from_llm.strip().split("```")
+    if len(parts) > 1:
+        return '\n'.join(parts[1].split('\n')[1:]).strip()
+    else:
+        # If no code block, return the raw output or empty string
+        return code_from_llm.strip()
 
 
 def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, temperature, inference_submission=False):
@@ -254,9 +259,16 @@ def submit_llama3_hf(txt2Llama, max_new_tokens=764, top_p=0.15, temperature=0.1,
         repetition_penalty=1.1,  # if output begins repeating increase
         do_sample=True,
     )
-    
-    res = generate_text(txt2Llama)
-    output_txt = res[0]["generated_text"]
+
+    print("[DEBUG] About to call model inference (generate_text)...")
+    try:
+        res = generate_text(txt2Llama)
+        print("[DEBUG] Model inference completed.")
+        output_txt = res[0]["generated_text"]
+    except Exception as e:
+        print(f"[DEBUG] Model inference failed: {e}")
+        output_txt = ""
+
     box_print("LLM OUTPUT", print_bbox_len=60, new_line_end=False)
     print(output_txt)
     box_print(f'time to load in seconds: {round(time.time()-start_time)}', print_bbox_len=120, new_line_end=False)   

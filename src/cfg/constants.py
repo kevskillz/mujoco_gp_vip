@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 #: Root directory of the repository
-ROOT_DIR = "/home/hice1/adantuluri7/scratch/llm-guided-evolution-Island-Migration"
+ROOT_DIR = "/home/hice1/klobo8/scratch/mujoco_gp_vip-llm-ge/mujoco_gp_vip-llm-ge"
 #: DATA_PATH absolute or relative to ExquisiteNetV2
 DATA_PATH = "./cifar10"
 #: Location where the current seed repo resides
@@ -111,7 +111,7 @@ module load anaconda3
 export CUDA_VISIBLE_DEVICES=0
 export HF_HOME=/storage/ice-shared/vip-vvk/llm_storage/
 
-source /home/hice1/adantuluri7/scratch/llm-guided-evolution-Island-Migration/rl/bin/activate 
+source /home/hice1/klobo8/scratch/llm-guided-evolution-Island-Migration/rl/bin/activate 
 # conda info
 
 # Set the TOKENIZERS_PARALLELISM environment variable if needed
@@ -143,7 +143,7 @@ module load anaconda3
 export CUDA_VISIBLE_DEVICES=0
 export HF_HOME=/storage/ice-shared/vip-vvk/llm_storage/
 
-source /home/hice1/adantuluri7/scratch/llm-guided-evolution-Island-Migration/rl/bin/activate 
+source /home/hice1/klobo8/scratch/llm-guided-evolution-Island-Migration/rl/bin/activate 
 # conda info
 
 # Set the TOKENIZERS_PARALLELISM environment variable if needed

@@ -13,7 +13,7 @@
 module purge
 module load python/3.10              # change to your cluster's version
 
-source /home/hice1/adantuluri7/scratch/mujoco_gp_vip/rl/bin/activate        # change to your venv path
+source /home/hice1/klobo8/scratch/mujoco_gp_vip/rl/bin/activate        # change to your venv path
 
 mkdir -p logs
 

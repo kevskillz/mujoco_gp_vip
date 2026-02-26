@@ -1,7 +1,7 @@
 ---------------------------------------
 Begin Slurm Prolog: Feb-12-2026 21:04:44
 Job ID:    4075035
-User ID:   adantuluri7
+User ID:   klobo8
 Account:   coc
 Job name:  ppo_halfcheetah
 Partition: coe-gpu
@@ -13,7 +13,7 @@ Finished at Thu Feb 12 21:04:48 EST 2026
 ---------------------------------------
 Begin Slurm Epilog: Feb-12-2026 21:04:48
 Job ID:        4075035
-User ID:       adantuluri7
+User ID:       klobo8
 Account:       coc
 Job name:      ppo_halfcheetah
 Resources:     cpu=8,gres/gpu:h100=1,mem=32G,node=1

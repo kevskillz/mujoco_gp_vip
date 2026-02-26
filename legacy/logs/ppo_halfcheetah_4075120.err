@@ -1,5 +1,5 @@
-/var/lib/slurm/slurmd/job4075120/slurm_script: line 25: /home/hice1/adantuluri7/venvs/rl/bin/activate: No such file or directory
+/var/lib/slurm/slurmd/job4075120/slurm_script: line 25: /home/hice1/klobo8/venvs/rl/bin/activate: No such file or directory
 Traceback (most recent call last):
-  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/train.py", line 2, in <module>
+  File "/storage/ice1/1/9/klobo8/mujoco_gp_vip/train.py", line 2, in <module>
     import gymnasium as gym
 ModuleNotFoundError: No module named 'gymnasium'

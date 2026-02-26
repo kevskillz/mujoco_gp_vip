@@ -105,7 +105,12 @@ def generate_template(PROB_EOT, GEN_COUNT, TOP_N_GENES, SOTA_ROOT, SEED_NETWORK,
         mute_type = "EoT"
     else:
         print("\t‣ FixedPrompts")
-        prompt_templates = glob.glob(f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt')
+        glob_pattern = f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt'
+        print(f"ROOT_DIR: {ROOT_DIR}")
+        print(f"Glob pattern: {glob_pattern}")
+        prompt_templates = glob.glob(glob_pattern)
+        if not prompt_templates:
+            raise RuntimeError(f"No prompt templates found with glob pattern: {glob_pattern}. Check ROOT_DIR and template directory structure.")
         template_path = np.random.choice(prompt_templates)
         mute_type = os.path.basename(template_path).split('.')[0]  # Assuming the file extension needs to be removed
         with open(template_path, 'r') as file:
@@ -187,7 +192,11 @@ def submit_bash(file_path, **kwargs):
         job_id
     """
     create_bash_file(file_path, **kwargs)
+    print(f"[DEBUG] Running subprocess: {[RUN_COMMAND, file_path]}")
     result = subprocess.run([RUN_COMMAND, file_path], capture_output=True, text=True)
+    print(f"[DEBUG] Subprocess finished. Return code: {result.returncode}")
+    print(f"[DEBUG] STDOUT: {result.stdout}")
+    print(f"[DEBUG] STDERR: {result.stderr}")
     local_output = None
     if result.returncode == 0 and LOCAL:
         local_output = result.stdout.strip()
@@ -196,7 +205,6 @@ def submit_bash(file_path, **kwargs):
         successful_sub_flag = True
     elif result.returncode == 0:
         print("\t‣ Output:", result.stdout.strip(), flush=True)
-        # print("\t‣ Script Submitted Successfully.\n\t‣ Output:", result.stdout.strip(), flush=True)
         successful_sub_flag = True
         job_id = result.stdout.split('job ')[-1].strip()
     else:
@@ -286,19 +294,25 @@ def generate_random_string(length=20):
     
 def create_individual(container, temp_min=0.05, temp_max=0.4):
     box_print("Create Individual", print_bbox_len=60, new_line_end=False)
+    print(f"[DEBUG] Starting create_individual for gene_id: {generate_random_string(length=24)}")
     out_dir = str(GENERATION)
     gene_id = generate_random_string(length=24)
     # Select prompte and temp
     temperature = round(random.uniform(temp_min, temp_max), 2)
     # Assign a file path and name for the model creation bash
     file_path = os.path.join(out_dir, f'{gene_id}.sh')
-    successful_sub_flag, job_id, local_output = submit_bash(file_path, 
+    try:
+        successful_sub_flag, job_id, local_output = submit_bash(file_path, 
                                               input_filename_x=f'{SOTA_ROOT}/network.py',
                                               output_filename =f'{SOTA_ROOT}/models/network_{gene_id}.py',
                                               gpu=LLM_GPU,
                                               python_file='src/llm_mutation.py', 
                                               top_p=0.1, temperature=temperature)
+    except Exception as e:
+        print(f"[ERROR] Exception in submit_bash for gene_id {gene_id}: {e}")
+        successful_sub_flag, job_id, local_output = False, None, None
     # Log data
+    print(f"[DEBUG] Finished create_individual for gene_id: {gene_id}, sub_flag: {successful_sub_flag}, job_id: {job_id}")
     GLOBAL_DATA[gene_id] = {'sub_flag':successful_sub_flag, 'job_id':job_id, 
                             'status':'subbed file', 'fitness':None, 'start_time':time.time()}
     GLOBAL_DATA_ANCESTRY[gene_id] = {'GENES':[gene_id], 'MUTATE_TYPE':["CREATED"]}
@@ -812,7 +826,13 @@ def true_nsga2(pop, k):
 def createPopulation():
     start_gen = 0
     box_print("CREATING POPULATION FROM SEED CODE")
-    population = toolbox.population(n=start_population_size)
+    print(f"[DEBUG] Creating population with size: {start_population_size}")
+    try:
+        population = toolbox.population(n=start_population_size)
+        print(f"[DEBUG] Population created with {len(population)} individuals.")
+    except Exception as e:
+        print(f"[ERROR] Exception during population creation: {e}")
+        population = []
     box_print("Batch Checking Created Genes", print_bbox_len=60, new_line_end=False)
     delayed_creation_check(population)
     hof = tools.HallOfFame(hof_size)
