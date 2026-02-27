@@ -477,7 +477,7 @@ def check_and_update_fitness(population, timeout=3600*30, loop_delay=60*30):
             
             if GLOBAL_DATA[gene_id]['sub_flag']==False:
                 ind.fitness.values = INVALID_FITNESS_MAX # Max error
-                GLOBAL_DATA[gene_id]['status'] == "completed"
+                GLOBAL_DATA[gene_id]['status'] = "completed"
                          
             if ind.fitness.values == PLACEHOLDER_FITNESS:  # If fitness not assigned
                 # check for gene_id_model.txt file
@@ -506,7 +506,7 @@ def check_and_update_fitness(population, timeout=3600*30, loop_delay=60*30):
                     if 'results_job' not in GLOBAL_DATA[gene_id].keys():
                         ind.fitness.values = INVALID_FITNESS_MAX # Max error
                         print(f'\t☠ No Placeholder Fitness for: {gene_id}')
-                        GLOBAL_DATA[gene_id]['status'] == "completed"
+                        GLOBAL_DATA[gene_id]['status'] = "completed"
                     else:
                         print(f"\t‣ Still Waiting On: Gene: {gene_id}", flush=True)
                         print_job_info(GLOBAL_DATA[gene_id])
@@ -602,6 +602,8 @@ def delayed_creation_check(offspring):
                     job_id = GLOBAL_DATA[k]["job_id"]
                     print(f'Checking for Job Completion: {job_id} for {gene_id}', flush=True)
                     job_done = check4job_completion(job_id)
+                    if not job_done:
+                        GLOBAL_DATA[k]["sub_flag"] = False
                   
     return offspring
 

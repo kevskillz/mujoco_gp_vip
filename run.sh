@@ -15,6 +15,6 @@ module load anaconda3
 export CUDA_VISIBLE_DEVICES=0
 export HF_HOME=/storage/ice-shared/vip-vvk/llm_storage/
 
-source /home/hice1/klobo8/scratch/llm-guided-evolution-Island-Migration/rl/bin/activate 
+source /home/hice1/adantuluri7/scratch/mujoco_gp_vip/rl/bin/activate 
 
 python run_improved.py first_test

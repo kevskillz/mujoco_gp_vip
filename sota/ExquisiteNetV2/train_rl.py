@@ -3,7 +3,7 @@ import gymnasium as gym
 import numpy as np
 import time
 from stable_baselines3 import PPO
-from network import SimpleMLPFeature
+# from network import SimpleMLPFeature
 
 
 
@@ -48,5 +48,11 @@ def main(gene_id, timesteps=500000):
     std_reward = np.std(rewards)
     train_time = time.time() - start_time
 
-    with open(f"results/{gene_id}_results.txt", "w") as f:
+    out_dir = os.path.join(os.path.dirname(__file__), "results")
+    import os
+    os.makedirs(out_dir, exist_ok=True)
+
+    with open(f"{out_dir}/{gene_id}_results.txt", "w") as f:
         f.write(f"{mean_reward},{std_reward},{train_time}")
+        
+    print("Job Done")

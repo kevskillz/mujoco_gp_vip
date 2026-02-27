@@ -110,8 +110,7 @@ def llm_code_qc(code_from_llm, base_code, generate_text):
     print("="*120);print(prompt2llm);print("="*120)
     
     res = generate_text(prompt2llm) # clean txt
-    code_from_llm = res[0]["generated_text"]
-    code_from_llm = '\n'.join(code_from_llm.strip().split("```")[1].split('\n')[1:]).strip()
+    code_from_llm = clean_code_from_llm(res[0]["generated_text"])
     return code_from_llm
 
 

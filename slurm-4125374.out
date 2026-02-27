@@ -1,0 +1,532 @@
+---------------------------------------
+Begin Slurm Prolog: Feb-26-2026 18:27:37
+Job ID:    4125374
+User ID:   adantuluri7
+Account:   coc
+Job name:  llm_opt
+Partition: ice-gpu
+QOS:       coe-ice
+---------------------------------------
+launching LLM Guided Evolution
+atl1-1-01-005-5-0.pace.gatech.edu
+
+⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⣿⡇⠀⠀⠀⠀⠀⠀⠀⢀⣠⣤⣶⣶⠶⣶⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⣀⣹⣟⣛⣛⣻⣿⣿⣿⡾⠟⢉⣴⠟⢁⣴⠋⣹⣷⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠈⠛⠛⣿⠉⢉⣩⠵⠚⠁⢀⡴⠛⠁⣠⠞⠁⣰⠏⠸⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢻⣷⠋⠁⠀⢀⡴⠋⠀⢀⡴⠋⠀⣼⠃⠀⡼⢿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢻⣆⣠⡴⠋⠀⠀⣠⠟⠀⢀⡾⠁⠀⡼⠁⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠻⣯⡀⠀⢀⡼⠃⠀⢠⡟⠀⢀⡾⠁⢀⣾⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠙⠻⣶⣟⡀⠀⣰⠏⠀⢀⡾⠁⠀⣼⢹⣿⣀⣤⣤⣴⠶⢿⡿⠛⢛⣷⢶⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠶⠶⠾⠷⠶⠿⠛⢻⣟⠉⣥⠟⠁⣠⠟⠀⢠⠞⠁⣄⡿⠻⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⠞⠁⢀⡴⠋⠀⣴⠋⠀⣰⠟⠀⣤⡾⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡄⢠⠞⠁⢀⡾⠁⢀⡼⠃⢀⡴⠋⠀⢸⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣷⠋⠀⣰⠏⠀⣠⠟⠀⣰⠟⠁⢀⡴⠛⣿⠀⠀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⣧⡼⠃⢀⡼⠋⢠⡞⠁⣠⣞⣋⣤⣶⣿⡟⠛⣿⠛⠛⣻⠟⠷⢶⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠻⣦⣾⣤⣴⣯⡶⠾⠟⠛⠉⠉⠉⣿⡇⢠⡏⠀⣰⠏⠀⢀⣼⠋⠻⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡇⡾⠀⢰⠏⠀⢠⡞⠁⠀⣠⠞⢻⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣷⠇⢠⠏⠀⣰⠋⠀⣠⠞⠁⠀⢀⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡟⢠⠟⢀⡼⠁⣠⠞⠁⣀⣴⢾⣿⣤⣿⣦⣄⣀⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⡟⣠⠏⣠⠞⣁⣴⣾⣿⣿⣿⣿⣿⣿⡏⢹⡏⠛⠳⣦⣄⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⢷⣾⣷⠿⠿⠛⠉⠀⠀⠈⠳⣬⣿⡟⣾⠁⠀⣼⠃⠉⠻⠆
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣧⡏⠀⣼⠃⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⠁⡼⠁⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣟⡼⠁⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡿⠁⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢙⣃⠀⠀
+
+
+**************************************************************************************************************
+*                                     CREATING POPULATION FROM SEED CODE                                     *
+**************************************************************************************************************
+
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxcNxC64aSvFNzOL89v6IyprSb
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxE9zFowRC02LJm1KK0FVfxQHI.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxE9zFowRC02LJm1KK0FVfxQHI.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxE9zFowRC02LJm1KK0FVfxQHI, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxcwbhfcjejNaiGvkei4gxPr3N
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxLbjWb6WAR2P9Jfl1bYQ5iaa5.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxLbjWb6WAR2P9Jfl1bYQ5iaa5.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxLbjWb6WAR2P9Jfl1bYQ5iaa5, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxBQY5a0rT8Gsz1vOLSv9NvUhI
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxVuJLeYOKC4zt7ckwM3wCKWr8.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxVuJLeYOKC4zt7ckwM3wCKWr8.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxVuJLeYOKC4zt7ckwM3wCKWr8, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxpAX31J50jcq0Ftfp2zkVwvlA
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxedqtxORhxUqlWvO6JVxCYomW.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxedqtxORhxUqlWvO6JVxCYomW.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxedqtxORhxUqlWvO6JVxCYomW, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxcR81wYBPKLWMcvC5dybEjjDm
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxNszZ1BrXNj5AxNcmj3NpJ5pK.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxNszZ1BrXNj5AxNcmj3NpJ5pK.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxNszZ1BrXNj5AxNcmj3NpJ5pK, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxpYWOzTqMFiN7xQKcwumhYmoY
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxNDKzR2TOk4Q4U4cmoDjaeZqE.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxNDKzR2TOk4Q4U4cmoDjaeZqE.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxNDKzR2TOk4Q4U4cmoDjaeZqE, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxxcqsn2Z5Avhu4dj7D5QWd1Yl
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxPWx5wb8a5IxQgEe2dg18xwXc.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxPWx5wb8a5IxQgEe2dg18xwXc.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxPWx5wb8a5IxQgEe2dg18xwXc, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxXx8CwS0MNdvG7jdArf19Aaib
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxXPtrH81Ru9gCSlUkW0mSHrpL.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxXPtrH81Ru9gCSlUkW0mSHrpL.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxXPtrH81Ru9gCSlUkW0mSHrpL, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxqray9LGfD9Hxg9XYY0BQsJdF
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxldD9pF4MWdjiZtbJN0JbgF2i.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxldD9pF4MWdjiZtbJN0JbgF2i.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxldD9pF4MWdjiZtbJN0JbgF2i, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXx5xYh5IsmPOk4nujSgo2LUHKO
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxEJ2kQQXuyNqnlv2I0yD3Obe4.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxEJ2kQQXuyNqnlv2I0yD3Obe4.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxEJ2kQQXuyNqnlv2I0yD3Obe4, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXx4Kj0h4D4Lvnv06NJ0FvDPt7G
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxYbApvew6SdE8n0hhnJCsMLBV.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxYbApvew6SdE8n0hhnJCsMLBV.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxYbApvew6SdE8n0hhnJCsMLBV, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxd4wMH85OAgfZQQdHgR4YdWsf
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXxf3AXu3sWazwdH3NyW9Q4jaA2.sh
+[DEBUG] Running subprocess: ['bash', '0/xXxf3AXu3sWazwdH3NyW9Q4jaA2.sh']
+[DEBUG] Subprocess finished. Return code: 1
+[DEBUG] STDOUT: Launching AIsurBL
+atl1-1-01-005-5-0.pace.gatech.edu
+Loading /home/hice1/adantuluri7/scratch/mujoco_gp_vip/sota/ExquisiteNetV2/network.py code
+
+[DEBUG] STDERR: 
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+
+	‣ Failed to Submit Script.
+	‣ Error: CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 66, in <module>
+    augment_network(input_filename=args.input_filename,
+  File "/storage/ice1/1/9/adantuluri7/mujoco_gp_vip/src/llm_mutation.py", line 21, in augment_network
+    augment_idx = np.random.randint(1, len(parts))
+  File "numpy/random/mtrand.pyx", line 798, in numpy.random.mtrand.RandomState.randint
+  File "numpy/random/_bounded_integers.pyx", line 1334, in numpy.random._bounded_integers._rand_int64
+ValueError: low >= high
+[DEBUG] Finished create_individual for gene_id: xXxf3AXu3sWazwdH3NyW9Q4jaA2, sub_flag: False, job_id: None
+
+************************************************************
+*                    Create Individual                     *
+************************************************************
+[DEBUG] Starting create_individual for gene_id: xXxxDQFc8HZBcZsSAqtcXLon2Ps
+	‣ FixedPrompts
+ROOT_DIR: /home/hice1/adantuluri7/scratch/mujoco_gp_vip
+Glob pattern: /home/hice1/adantuluri7/scratch/mujoco_gp_vip/templates/FixedPrompts/*/*.txt
+	‣ Bash script saved to 0/xXx8jnPjxB3PbJp0VWXn0VHBVRy.sh
+[2026-02-26T18:32:10.376] error: *** JOB 4125374 ON atl1-1-01-005-5-0 CANCELLED AT 2026-02-26T18:32:10 DUE to SIGNAL Terminated ***
+---------------------------------------
+Begin Slurm Epilog: Feb-26-2026 18:32:13
+Job ID:        4125374
+User ID:       adantuluri7
+Account:       coc
+Job name:      llm_opt
+Resources:     cpu=1,gres/gpu:rtx_6000=1,mem=16G,node=1
+Rsrc Used:     cput=00:04:34,vmem=0,walltime=00:04:34,mem=1275568K,energy_used=0
+Partition:     ice-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-01-005-5-0
+---------------------------------------

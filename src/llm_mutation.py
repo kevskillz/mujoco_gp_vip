@@ -18,8 +18,11 @@ def augment_network(input_filename='network.py', output_filename='network_x.py',
     
     print(f'Loading {input_filename} code')
     parts = split_file(input_filename)
-    augment_idx = np.random.randint(1, len(parts))
     # select code to be augmented randomly 
+    if len(parts) > 1:
+        augment_idx = np.random.randint(1, len(parts))
+    else:
+        augment_idx = 0
     code2llm = parts[augment_idx]
     # prompt_templates = glob.glob(f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt')
     # template_path = np.random.choice(prompt_templates)
@@ -29,7 +32,7 @@ def augment_network(input_filename='network.py', output_filename='network_x.py',
         template_txt = file.read()
     # add code to be augmented 
     txt2llm = template_txt.format(code2llm.strip())
-    code_from_llm = generate_augmented_code(txt2llm, augment_idx-1, apply_quality_control,
+    code_from_llm = generate_augmented_code(txt2llm, max(0, augment_idx-1), apply_quality_control,
                                             top_p, temperature, inference_submission=inference_submission)
     note_txt = extract_note(code2llm)
     parts[augment_idx] = f"\n{note_txt}{code_from_llm}\n"
