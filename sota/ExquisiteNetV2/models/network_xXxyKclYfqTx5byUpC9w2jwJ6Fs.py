@@ -40,23 +40,22 @@ def get_policy_kwargs():
     }
 
 # --OPTION--
-
 # ===============================
 # === PPO Hyperparameter Gene ===
 # ===============================
 
 def get_ppo_kwargs():
     return dict(
-        learning_rate=3e-4,
-        gamma=0.99,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        ent_coef=0.0,
-        vf_coef=0.5,
-        max_grad_norm=0.5,
-        n_steps=2048,
-        batch_size=64,
-        n_epochs=10,
+        learning_rate=1e-3,  # Increased learning rate
+        gamma=0.98,  # Decreased gamma
+        gae_lambda=0.98,  # Increased gae lambda
+        clip_range=0.1,  # Decreased clip range
+        ent_coef=0.01,  # Increased entropy coefficient
+        vf_coef=0.2,  # Decreased value function coefficient
+        max_grad_norm=1.0,  # Increased max grad norm
+        n_steps=4096,  # Increased number of steps
+        batch_size=128,  # Increased batch size
+        n_epochs=20,  # Increased number of epochs
         normalize_advantage=True,
         verbose=0,
     )

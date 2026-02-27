@@ -159,7 +159,7 @@ def write_bash_script(input_filename_x=f'{SOTA_ROOT}/network.py',
             file.write(template_txt)
             
         temp_text = f'{python_file} {input_filename_x} {output_filename} {file_path} --top_p {top_p} --temperature {temperature}'
-        python_runline = f"python {temp_text} --apply_quality_control '{QC_CHECK_BOOL}' --inference_submission {INFERENCE_SUBMISSION}"
+        python_runline = f"{CONDA_PYTHON} {temp_text} --apply_quality_control '{QC_CHECK_BOOL}' --inference_submission {INFERENCE_SUBMISSION}"
         
     elif python_file=='src/llm_crossover.py':
         gene_id_parent2 = fetch_gene(input_filename_y)
@@ -167,7 +167,7 @@ def write_bash_script(input_filename_x=f'{SOTA_ROOT}/network.py',
                                                 mutation_type=None, gene_id_parent2=gene_id_parent2)
         
         temp_text = f"{python_file} {input_filename_x} {input_filename_y} {output_filename} --top_p {top_p} --temperature {temperature}"
-        python_runline = f"python {temp_text} --apply_quality_control '{QC_CHECK_BOOL}' --inference_submission {INFERENCE_SUBMISSION}"
+        python_runline = f"{CONDA_PYTHON} {temp_text} --apply_quality_control '{QC_CHECK_BOOL}' --inference_submission {INFERENCE_SUBMISSION}"
     else:
         raise ValueError("Invalid python_file argument")
 
@@ -342,7 +342,7 @@ def submit_run(gene_id):
             tmp = f"-data {DATA_PATH} -end_lr 0.001 -seed 21 -val_r 0.2 -epoch 2"
 
         # python_runline = f'python {train_file} -bs 216 -epoch 2 -network "models.network_{gene_id}" {tmp}'
-        python_runline = f'python {train_file} -network "models.network_{gene_id}" -timesteps 500000'
+        python_runline = f'{CONDA_PYTHON} {train_file} -network "models.network_{gene_id}" -timesteps 500'
         bash_script_content = PYTHON_BASH_SCRIPT_TEMPLATE.format(python_runline)
         return bash_script_content
 
@@ -477,7 +477,7 @@ def check_and_update_fitness(population, timeout=3600*30, loop_delay=60*30):
             
             if GLOBAL_DATA[gene_id]['sub_flag']==False:
                 ind.fitness.values = INVALID_FITNESS_MAX # Max error
-                GLOBAL_DATA[gene_id]['status'] == "completed"
+                GLOBAL_DATA[gene_id]['status'] = "completed"
                          
             if ind.fitness.values == PLACEHOLDER_FITNESS:  # If fitness not assigned
                 # check for gene_id_model.txt file
@@ -506,7 +506,7 @@ def check_and_update_fitness(population, timeout=3600*30, loop_delay=60*30):
                     if 'results_job' not in GLOBAL_DATA[gene_id].keys():
                         ind.fitness.values = INVALID_FITNESS_MAX # Max error
                         print(f'\t☠ No Placeholder Fitness for: {gene_id}')
-                        GLOBAL_DATA[gene_id]['status'] == "completed"
+                        GLOBAL_DATA[gene_id]['status'] = "completed"
                     else:
                         print(f"\t‣ Still Waiting On: Gene: {gene_id}", flush=True)
                         print_job_info(GLOBAL_DATA[gene_id])
@@ -819,12 +819,17 @@ def load_checkpoint(folder_name="checkpoints", checkpoint_file=None):
 
 def true_nsga2(pop, k):
     pop = tools.selNSGA2(pop, len(pop)) # 10 diff
+    # Clamp k to available population size (can be small if LLM generated broken code)
+    k = min(k, len(pop))
+    if k < 4:
+        # selTournamentDCD requires k to be a multiple of 4; fall back to simple selection
+        return pop[:k] if k > 0 else pop
     new_pop = tools.selTournamentDCD(pop, k) # mults of 4
     return new_pop
 
 # Error Handling 
 def createPopulation():
-    start_gen = 0
+    global population, hof
     box_print("CREATING POPULATION FROM SEED CODE")
     print(f"[DEBUG] Creating population with size: {start_population_size}")
     try:
@@ -915,10 +920,10 @@ if __name__ == "__main__":
         if len(population) == 0:
             exit() 
         
-        elites = tools.selSPEA2(population, num_elites)
+        elites = tools.selSPEA2(population, min(num_elites, len(population)))
 
         # Select the next generation's parents
-        offspring = toolbox.select(population, population_size)
+        offspring = toolbox.select(population, min(population_size, len(population)))
         
         print_population(offspring, GLOBAL_DATA)
         
