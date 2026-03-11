@@ -34,6 +34,10 @@ def augment_network(input_filename_x, input_filename_y, output_filename,
     # Generate augmented code
     code_from_llm = generate_augmented_code(txt2llm, augment_idx, apply_quality_control,
                                             top_p, temperature, inference_submission=inference_submission)
+    if code_from_llm is None:
+        print(f"ERROR: LLM failed to generate crossover code for {output_filename}")
+        import sys
+        sys.exit(1)
     # Insert note if present
     temp_txt = parts_x[augment_idx]
     note_txt = extract_note(temp_txt)

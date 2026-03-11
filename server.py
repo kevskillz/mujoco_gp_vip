@@ -27,8 +27,14 @@ class LLMModel:
             with cls._lock:
                 if cls._instance is None:
                     print(f"Loading model at {MODEL_PATH} for the first time")
-                    cls._instance = super(LLMModel, cls).__new__(cls)
-                    cls._instance._initialize()
+                    instance = super(LLMModel, cls).__new__(cls)
+                    try:
+                        instance._initialize()
+                    except Exception as e:
+                        print(f"ERROR: Failed to initialize LLMModel: {e}")
+                        # Do NOT set cls._instance so the next call will retry
+                        raise
+                    cls._instance = instance
                     print('I created my instance')
                     print(dir(cls._instance))            
         return cls._instance
@@ -37,16 +43,28 @@ class LLMModel:
         print("initializing")
         # TODO figure out how to better handle the initialization (i.e. mixtral dies because it doesn't have attention)
         # TODO find out why when this dies the code around it continues i.e. a model is returned to generate_text, but I never see the print out of "I created my instance"
+        # Resolve HF cache directories: if MODEL_PATH is a HF cache dir
+        # (contains 'snapshots/'), find the actual model snapshot
+        model_path = MODEL_PATH
+        import os
+        snapshots_dir = os.path.join(model_path, 'snapshots')
+        if os.path.isdir(snapshots_dir):
+            # Use the latest snapshot
+            snapshot_dirs = sorted(os.listdir(snapshots_dir))
+            if snapshot_dirs:
+                model_path = os.path.join(snapshots_dir, snapshot_dirs[-1])
+                print(f"Resolved HF cache to snapshot: {model_path}")
+        
         self.model = transformers.AutoModelForCausalLM.from_pretrained(
-            MODEL_PATH,
+            model_path,
             trust_remote_code=True,
-            dtype=torch.bfloat16,
+            torch_dtype=torch.bfloat16,
             device_map="auto",
             attn_implementation="sdpa" # faster inference
         ).eval()
         print("model loaded")
 
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(MODEL_PATH)
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
         print("tokenizer created")
         
         # for batching, need to set pad tokens

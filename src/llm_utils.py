@@ -28,6 +28,9 @@ def retrieve_base_code(idx):
 
 def clean_code_from_llm(code_from_llm):
     """Cleans the code received from LLM."""
+    if code_from_llm is None:
+        print("WARNING: clean_code_from_llm received None input")
+        return None
     code_generator = None
     # Select Correct LLM
     if LLM_MODEL == 'mixtral' or LLM_MODEL == 'llama3.3':
@@ -38,24 +41,16 @@ def clean_code_from_llm(code_from_llm):
         code_generator = submit_gemini_api
     elif LLM_MODEL == 'deepseek':
         code_generator = submit_deepseek_local
-        # code_checker_prompt = os.path.join(ROOT_DIR, 'templates/FixedPrompts/validation/code_validation_prompt.txt')
-        # model_varaint_code = ""
-        # if "```" in code_from_llm:
-        #     model_varaint_code = '\n'.join(code_from_llm.split("```")[1].strip().split("\n")[1:])
-        # else:
-        #     model_varaint_code = None
-        # if model_varaint_code:
-        #     box_print("VALIDATING LLM CODE", print_bbox_len=60, new_line_end=False)
-        #     template_text = ""
-        #     with open(code_checker_prompt, 'r') as file:
-        #         template_text = file.read()
-        #     prompt = template_text.format(model_varaint_code.strip())
-        #     print(prompt)
-        #     verified_code = code_generator(prompt, top_p=0.15, temperature=0.1) 
-        #     print(verified_code)
-        #     return '\n'.join(verified_code.strip().split("```")[1].split('\n')[1:])
-   
-    return '\n'.join(code_from_llm.strip().split("```")[1].split('\n')[1:])
+
+    # Safely extract code from markdown fences
+    stripped = code_from_llm.strip()
+    if "```" in stripped:
+        parts = stripped.split("```")
+        if len(parts) >= 2:
+            return '\n'.join(parts[1].split('\n')[1:])
+    # No code fences found — return the raw text as-is
+    print("WARNING: No code fences found in LLM response, returning raw text")
+    return stripped
 
 def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, temperature, inference_submission=False):
     """Generates augmented code using Mixtral."""
@@ -79,6 +74,7 @@ def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, 
         qc_func = llm_code_qc_hf
         
     retries = 0
+    code_from_llm = None
     while retries < 3:
         if apply_quality_control:
             base_code = retrieve_base_code(augment_idx)
@@ -89,7 +85,7 @@ def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, 
 
         print("Checking LLM Response")
 
-        if not code_from_llm :
+        if not code_from_llm:
             retries += 1
             print("Response Invalid")
             continue
@@ -97,16 +93,17 @@ def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, 
             print("Response Valid")
             break
 
-        box_print("TEXT FROM LLM", print_bbox_len=60, new_line_end=False)
-        
-        print(code_from_llm)
-
     box_print("CODE FROM LLM", print_bbox_len=60, new_line_end=False)
+
+    if code_from_llm is None:
+        print("ERROR: All LLM retries failed — no code generated")
+        return None
+
     code_from_llm = clean_code_from_llm(code_from_llm)
 
     print(code_from_llm)
     
-    return code_from_llm 
+    return code_from_llm
 
 def extract_note(txt):
     """Extracts note from the part if present."""
@@ -255,9 +252,16 @@ def submit_mixtral(txt2mixtral, max_new_tokens=764, top_p=0.15, temperature=0.1,
     
 def get_llm_server_hostname():
     hostname = None
-    hostname_file_path = HOSTNAME_DIR 
-    with open(hostname_file_path, 'r') as f:
-        hostname = f.readline().strip() 
+    hostname_file_path = HOSTNAME_DIR
+    try:
+        with open(hostname_file_path, 'r') as f:
+            hostname = f.readline().strip()
+    except FileNotFoundError:
+        print(f"WARNING: hostname file not found at {hostname_file_path}, falling back to localhost")
+        hostname = 'localhost'
+    if not hostname:
+        print(f"WARNING: hostname file is empty, falling back to localhost")
+        hostname = 'localhost'
     return hostname
 
 def submit_mixtral_local(prompt, max_new_tokens=850, temperature=0.2, top_p=0.15, server_url=f"http://{os.getenv('SERVER_HOSTNAME', 'localhost')}:{PORT}/generate", return_gen=False):
@@ -430,7 +434,11 @@ def mutate_prompts(n=5):
             llm_code_generator = submit_gemini_api
         elif LLM_MODEL == 'deepseek':
             llm_code_generator = submit_deepseek_local
-        output = llm_code_generator(prompt, temperature=temp).strip()
+        output = llm_code_generator(prompt, temperature=temp)
+        if output is None:
+            print(f"WARNING: LLM returned None for prompt mutation {i}, skipping")
+            continue
+        output = output.strip()
         if "```" in output:
             output = output.split("```")[0]
         output = output + "\n```python\n{}\n```"
