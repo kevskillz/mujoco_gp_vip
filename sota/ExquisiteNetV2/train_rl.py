@@ -6,14 +6,14 @@ import gymnasium as gym
 import numpy as np
 import time
 from stable_baselines3 import PPO
-
+from network import get_policy_kwargs, get_ppo_kwargs   
 
 def main(gene_id, timesteps=500000):
 
-    module = importlib.import_module(f"models.network_{gene_id}")
+    # module = importlib.import_module(f"network.py")
 
-    policy_kwargs = module.get_policy_kwargs()
-    ppo_kwargs = module.get_ppo_kwargs()
+    policy_kwargs = get_policy_kwargs()
+    ppo_kwargs = get_ppo_kwargs()
 
     # Extract the policy class and remove it from policy_kwargs
     # so it doesn't get passed twice to PPO
@@ -30,6 +30,7 @@ def main(gene_id, timesteps=500000):
         # Also ensure batch_size <= n_steps
         ppo_kwargs["batch_size"] = min(ppo_kwargs.get("batch_size", 64), ppo_kwargs["n_steps"])
 
+    print("running")
     try:
         model = PPO(
             policy=policy_class,
@@ -90,13 +91,14 @@ def main(gene_id, timesteps=500000):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train RL agent with evolved network")
-    parser.add_argument("-network", type=str, required=True,
-                        help='Module path like "models.network_XXXX"')
+    # parser.add_argument("-network", type=str, required=True,
+    #                     help='Module path like "models.network_XXXX"')
     parser.add_argument("-timesteps", type=int, default=500000,
                         help="Total training timesteps")
     args = parser.parse_args()
 
     # Extract gene_id from module path: "models.network_XXXX" -> "XXXX"
-    gene_id = args.network.replace("models.network_", "")
+    # gene_id = args.network.replace("models.network_", "")
 
-    main(gene_id, timesteps=args.timesteps)
+    main("", timesteps=500)
+

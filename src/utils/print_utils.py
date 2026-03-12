@@ -27,13 +27,16 @@ def print_scores(population, fitness_weights):
     for i in range(num_objectives):
         fits = objective_scores[i]
         fits = [x for x in objective_scores[i] if math.isfinite(x)]
+        direction = "Maximize" if fitness_weights[i] > 0 else "Minimize"
+        print(f"Objective {i+1} ({direction}):")
+        if not fits:
+            print("  No finite fitness values (all runs invalid or failed).")
+            print()
+            continue
         length = len(fits)
         mean = sum(fits) / length
         sum2 = sum(x*x for x in fits)
         std = abs(sum2 / length - mean**2)**0.5
-        direction = "Maximize" if fitness_weights[i] > 0 else "Minimize"
-        
-        print(f"Objective {i+1} ({direction}):")
         print(f"  Min: {min(fits)}")
         print(f"  Max: {max(fits)}")
         print(f"  Avg: {mean}")

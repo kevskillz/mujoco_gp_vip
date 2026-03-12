@@ -1,16 +1,14 @@
-import sys
-sys.path.append("src")
-
 import re
 import os
 import glob
 import time
+import argparse
 import numpy as np
 import transformers
 from torch import bfloat16, float16
-from utils.privit import *
-from cfg.constants import *
-from utils.print_utils import box_print
+from src.utils.privit import *
+from src.cfg.constants import *
+from src.utils.print_utils import box_print
 
 from typing import Optional
 #import fire
@@ -141,11 +139,14 @@ def submit_mixtral_hf(txt2mixtral, max_new_tokens=1024, top_p=0.15, temperature=
     Uses chat_completion() via the 'together' provider — no local tokenizer download needed.
     """    
     max_new_tokens = np.random.randint(900, 1300)
-    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', ''))
+    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', '')).strip()
+    if not hf_token:
+        raise RuntimeError("Missing Hugging Face token. Set HF_TOKEN or HUGGINGFACE_HUB_TOKEN.")
     if hf_token:
-        huggingface_hub.login(token=hf_token, new_session=False)
-    else:
-        huggingface_hub.login(new_session=False)
+        try:
+            huggingface_hub.login(token=hf_token, new_session=False)
+        except TypeError:
+            huggingface_hub.login(token=hf_token)
     client = InferenceClient(provider="together", token=hf_token)
 
     messages = [
@@ -178,11 +179,14 @@ def submit_llama3(txt2llama, max_new_tokens=1024, top_p=0.15, temperature=0.1,
     Uses chat_completion() via the 'together' provider — no local tokenizer download needed.
     """    
     max_new_tokens = np.random.randint(900, 1300)
-    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', ''))
+    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', '')).strip()
+    if not hf_token:
+        raise RuntimeError("Missing Hugging Face token. Set HF_TOKEN or HUGGINGFACE_HUB_TOKEN.")
     if hf_token:
-        huggingface_hub.login(token=hf_token, new_session=False)
-    else:
-        huggingface_hub.login(new_session=False)
+        try:
+            huggingface_hub.login(token=hf_token, new_session=False)
+        except TypeError:
+            huggingface_hub.login(token=hf_token)
     client = InferenceClient(provider="together", token=hf_token)
 
     messages = [
@@ -318,7 +322,16 @@ def submit_mixtral(txt2mixtral, max_new_tokens=764, top_p=0.15, temperature=0.1,
     
     
 def mutate_prompts(n=5):
-    templates = np.random.choice(glob.glob(f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt'), n)
+    candidates = glob.glob(f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt')
+    if not candidates:
+        print(f"No prompt templates found under {ROOT_DIR}/templates/FixedPrompts; skipping mutate_prompts().")
+        return
+    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', ''))
+    if LLM_MODEL in ('mixtral', 'llama3') and not hf_token:
+        print("No Hugging Face token found (HF_TOKEN/HUGGINGFACE_HUB_TOKEN); skipping mutate_prompts().")
+        return
+    sample_n = min(n, len(candidates))
+    templates = np.random.choice(candidates, sample_n, replace=False)
     for i, template in enumerate(templates):
         path, filename = os.path.split(template)
         with open(template, 'r') as file:

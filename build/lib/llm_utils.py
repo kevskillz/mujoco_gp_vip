@@ -34,7 +34,12 @@ def retrieve_base_code(idx):
 
 def clean_code_from_llm(code_from_llm):
     """Cleans the code received from LLM."""
-    return '\n'.join(code_from_llm.strip().split("```")[1].split('\n')[1:]).strip()
+    parts = code_from_llm.strip().split("```")
+    if len(parts) > 1:
+        return '\n'.join(parts[1].split('\n')[1:]).strip()
+    else:
+        # If no code block, return the raw output or empty string
+        return code_from_llm.strip()
 
 
 def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, temperature, inference_submission=False):
@@ -49,7 +54,7 @@ def generate_augmented_code(txt2llm, augment_idx, apply_quality_control, top_p, 
         if LLM_MODEL == 'mixtral':
             llm_code_generator = submit_mixtral_hf
         elif LLM_MODEL == 'llama3':
-            llm_code_generator = submit_llama3_hf
+            llm_code_generator = submit_llama3  # Use HF Inference API (not local model)
         elif LLM_MODEL == 'gemini':
             llm_code_generator = submit_gemini_api
         qc_func = llm_code_qc_hf
@@ -132,100 +137,76 @@ def llm_code_qc_hf(code_from_llm, base_code, generate_text=None):
 def submit_mixtral_hf(txt2mixtral, max_new_tokens=1024, top_p=0.15, temperature=0.1, 
                       model_id="mistralai/Mixtral-8x7B-Instruct-v0.1", return_gen=False):
     """
-    This function submits a model prompt to mixtral through the HuggingFace Inference API
-
-    Parameters
-    ----------
-    txt2mixtral : str
-        Prompt that will be sent to mixtral
-    max_new_tokens : int, optional
-       A setting to tell the LLM the maximum number of tokens to return, by default 1024
-    top_p : float, optional
-        _description_, by default 0.15
-    temperature : float, optional
-        _description_, by default 0.1
-    model_id : str, optional
-       Which mixtral variant to utilize for inference, by default "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    return_gen : bool, optional
-        _description_, by default False
-
-    Returns
-    -------
-    str
-        Model's output from inference
+    This function submits a model prompt to Mixtral through the HuggingFace Inference API.
+    Uses chat_completion() via the 'together' provider — no local tokenizer download needed.
     """    
     max_new_tokens = np.random.randint(900, 1300)
-    os.environ['HUGGINGFACE_HUB_TOKEN'] = "Your HF Token here"
-    huggingface_hub.login(new_session=False)
-    client = InferenceClient(model=model_id)
-    client.headers["x-use-cache"] = "0"
+    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', ''))
+    if hf_token:
+        huggingface_hub.login(token=hf_token, new_session=False)
+    else:
+        huggingface_hub.login(new_session=False)
+    client = InferenceClient(provider="together", token=hf_token)
 
-    instructions = [
-
+    messages = [
             {
                 "role": "user",
                 "content": "Provide code in Python\n" + txt2mixtral,
             },     
     ]
 
-    tokenizer_converter = AutoTokenizer.from_pretrained(model_id)
-    prompt = tokenizer_converter.apply_chat_template(instructions, tokenize=False)
-    results = [client.text_generation(prompt, max_new_tokens=max_new_tokens, 
-                                      return_full_text=False, 
-                                      temperature=temperature, seed=101)]
+    # Use chat_completion — server handles prompt formatting, no local tokenizer needed
+    response = client.chat_completion(
+        model=model_id,
+        messages=messages,
+        max_tokens=max_new_tokens,
+        temperature=max(temperature, 0.01),
+        top_p=top_p,
+        seed=101,
+    )
+    result_text = response.choices[0].message.content
+
     if return_gen:
-        return results[0], None
+        return result_text, None
     else:
-        return results[0]
+        return result_text
     
 def submit_llama3(txt2llama, max_new_tokens=1024, top_p=0.15, temperature=0.1, 
-                      model_id="meta-llama/Meta-Llama-3.1-70B-Instruct", return_gen=False):
+                      model_id="meta-llama/Llama-3.3-70B-Instruct", return_gen=False):
     """
-    This function submits a model prompt to Llama3 through the HuggingFace Inference API
-
-    Parameters
-    ----------
-    txt2llama : str
-        Prompt that will be sent to Llama3
-    max_new_tokens : int, optional
-        A setting to tell the LLM the maximum number of tokens to return, by default 1024
-    top_p : float, optional
-        _description_, by default 0.15
-    temperature : float, optional
-        _description_, by default 0.1
-    model_id : str, optional
-        Which Llama3 variant to utilize for inference, by default "meta-llama/Meta-Llama-3.1-70B-Instruct"
-    return_gen : bool, optional
-        _description_, by default False
-
-    Returns
-    -------
-    str
-        Model's output from inference
+    This function submits a model prompt to Llama3 through the HuggingFace Inference API.
+    Uses chat_completion() via the 'together' provider — no local tokenizer download needed.
     """    
     max_new_tokens = np.random.randint(900, 1300)
-    os.environ['HUGGINGFACE_HUB_TOKEN'] = "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"
-    huggingface_hub.login(new_session=False)
-    client = InferenceClient(model=model_id)
-    client.headers["x-use-cache"] = "0"
+    hf_token = os.environ.get('HUGGINGFACE_HUB_TOKEN', os.environ.get('HF_TOKEN', ''))
+    if hf_token:
+        huggingface_hub.login(token=hf_token, new_session=False)
+    else:
+        huggingface_hub.login(new_session=False)
+    client = InferenceClient(provider="together", token=hf_token)
 
-    instructions = [
-
+    messages = [
             {
                 "role": "user",
                 "content": "Provide code in Python\n" + txt2llama,
             },     
     ]
 
-    tokenizer_converter = AutoTokenizer.from_pretrained(model_id)
-    prompt = tokenizer_converter.apply_chat_template(instructions, tokenize=False)
-    results = [client.text_generation(prompt, max_new_tokens=max_new_tokens, 
-                                      return_full_text=False, 
-                                      temperature=temperature, seed=101)]
+    # Use chat_completion — server handles prompt formatting, no local tokenizer needed
+    response = client.chat_completion(
+        model=model_id,
+        messages=messages,
+        max_tokens=max_new_tokens,
+        temperature=max(temperature, 0.01),
+        top_p=top_p,
+        seed=101,
+    )
+    result_text = response.choices[0].message.content
+
     if return_gen:
-        return results[0], None
+        return result_text, None
     else:
-        return results[0]
+        return result_text
 
 def submit_llama3_hf(txt2Llama, max_new_tokens=764, top_p=0.15, temperature=0.1, 
                    model_id="meta-llama/Llama-3.2-3B", return_gen=False):
@@ -254,9 +235,16 @@ def submit_llama3_hf(txt2Llama, max_new_tokens=764, top_p=0.15, temperature=0.1,
         repetition_penalty=1.1,  # if output begins repeating increase
         do_sample=True,
     )
-    
-    res = generate_text(txt2Llama)
-    output_txt = res[0]["generated_text"]
+
+    print("[DEBUG] About to call model inference (generate_text)...")
+    try:
+        res = generate_text(txt2Llama)
+        print("[DEBUG] Model inference completed.")
+        output_txt = res[0]["generated_text"]
+    except Exception as e:
+        print(f"[DEBUG] Model inference failed: {e}")
+        output_txt = ""
+
     box_print("LLM OUTPUT", print_bbox_len=60, new_line_end=False)
     print(output_txt)
     box_print(f'time to load in seconds: {round(time.time()-start_time)}', print_bbox_len=120, new_line_end=False)   
@@ -341,7 +329,7 @@ def mutate_prompts(n=5):
         if LLM_MODEL == 'mixtral':
             llm_code_generator = submit_mixtral_hf
         elif LLM_MODEL == 'llama3':
-            llm_code_generator = submit_llama3_hf
+            llm_code_generator = submit_llama3  # Use HF Inference API (not local model)
         output = llm_code_generator(prompt, temperature=temp).strip()
         if "```" in output:
             output = output.split("```")[0]

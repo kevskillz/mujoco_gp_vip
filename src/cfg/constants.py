@@ -1,9 +1,19 @@
 import os
 import numpy as np
 import torch
+import sys
+from pathlib import Path
+
+
+def _find_repo_root() -> str:
+	current = Path(__file__).resolve()
+	for parent in current.parents:
+		if (parent / "templates").exists() and (parent / "sota").exists():
+			return str(parent)
+	return str(current.parents[2])
 
 #: Root directory of the repository
-ROOT_DIR = "/home/hice1/agudeti3/mujoco_gp_vip"
+ROOT_DIR = _find_repo_root()
 #: DATA_PATH absolute or relative to ExquisiteNetV2
 DATA_PATH = "./cifar10"
 #: Location where the current seed repo resides
@@ -29,6 +39,13 @@ MACOS = False
 # else:
 # 	DEVICE = 'cpu'
 DEVICE = 'cuda'
+if torch.cuda.is_available():
+	DEVICE = 'cuda'
+elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+	DEVICE = 'mps'
+	MACOS = True
+else:
+	DEVICE = 'cpu'
 
 #LLM_MODEL = 'mixtral'
 LLM_MODEL = 'llama3'
@@ -60,15 +77,15 @@ PROB_QC = 0.0
 PROB_EOT = 0.0  # Disable EoT for quick test (needs prior elite genes)
 
 #: Number of generations to run for
-num_generations = 1  # Smoke test: 1 generation (login node)
+num_generations = 20  # Smoke test: 1 generation (login node)
 
 #: Population size for launching optimization
-start_population_size = 2  # Smoke test: 2 individuals (login node)
+start_population_size = 8  # Smoke test: 2 individuals (login node)
 # start_population_size = 144   # Size of the population 124=72
 #population_size = 44 # with cx_prob (0.25) and mute_prob (0.7) you get about %50 successful turnover
 
 #: Population size to utilize in each generation after optimization begins
-population_size = 2 # Smoke test: 2 individuals (login node)
+population_size = 8 # Smoke test: 2 individuals (login node)
 
 crossover_probability = 0.35  #: Probability of mating two individuals
 mutation_probability = 0.8 	  #: Probability of mutating an individual
@@ -92,7 +109,7 @@ INFERENCE_SUBMISSION = True
 LLM_GPU = 'A100-40GB|A100-80GB|H100|V100-16GB|V100-32GB|RTX6000|A40|L40S'
 
 #: Path to the conda env Python binary (used in local bash templates)
-CONDA_PYTHON = "/home/hice1/agudeti3/.conda/envs/llm_guided_evolution/bin/python"
+CONDA_PYTHON = sys.executable
 
 #: Template script for submitting job for evaluation.
 PYTHON_BASH_SCRIPT_TEMPLATE = """#!/bin/bash

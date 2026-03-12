@@ -14,6 +14,14 @@ from src.utils.print_utils import print_population, print_scores, box_print, pri
 from src.llm_utils import split_file, retrieve_base_code, mutate_prompts
 from src.cfg.constants import *
 
+
+def model_path_for_gene(gene_id):
+    return f'{SOTA_ROOT}/models/network_{gene_id}.py'
+
+
+def gene_model_exists(gene_id):
+    return os.path.exists(model_path_for_gene(gene_id))
+
 def print_ancestry(data):
     for gene in data.keys():
         print(f'gene: {gene}')
@@ -88,36 +96,40 @@ def generate_template(PROB_EOT, GEN_COUNT, TOP_N_GENES, SOTA_ROOT, SEED_NETWORK,
 
     if (PROB_EOT > np.random.uniform()) and (GEN_COUNT > 0):
         print("\t‣ EoT")
-        top_gene = np.random.choice([x[0] for x in TOP_N_GENES])
-        parts_x = split_file(f"{SOTA_ROOT}/models/network_{top_gene}.py")
-        parts_y = split_file(SEED_NETWORK)
-        parts = [(x.strip(), y.strip(), idx) for idx, (x, y) in enumerate(zip(parts_x[1:], parts_y[1:]))]
-        random.shuffle(parts)
-        for x, y, augment_idx in parts:
-            if x.strip() != y.strip():
-                break
-                
-        eot_template_path = os.path.join(ROOT_DIR, 'templates/EoT/EoT.txt')
-        with open(eot_template_path, 'r') as file:
-            eot_template_txt = file.read()
-            
-        template_txt = eot_template_txt.format(x, y, "{}")
-        mute_type = "EoT"
-    else:
-        print("\t‣ FixedPrompts")
-        glob_pattern = f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt'
-        print(f"ROOT_DIR: {ROOT_DIR}")
-        print(f"Glob pattern: {glob_pattern}")
-        prompt_templates = glob.glob(glob_pattern)
-        if not prompt_templates:
-            raise RuntimeError(f"No prompt templates found with glob pattern: {glob_pattern}. Check ROOT_DIR and template directory structure.")
-        template_path = np.random.choice(prompt_templates)
-        mute_type = os.path.basename(template_path).split('.')[0]  # Assuming the file extension needs to be removed
-        with open(template_path, 'r') as file:
-            template_txt = file.read()
-        with open(f'{ROOT_DIR}/templates/ConstantRules.txt', 'r') as file:
-            rules_txt = file.read()
-        template_txt = f'{template_txt}\n{rules_txt}'
+        valid_top_genes = [g[0] for g in TOP_N_GENES if gene_model_exists(g[0])]
+        if valid_top_genes:
+            top_gene = np.random.choice(valid_top_genes)
+            parts_x = split_file(model_path_for_gene(top_gene))
+            parts_y = split_file(SEED_NETWORK)
+            parts = [(x.strip(), y.strip(), idx) for idx, (x, y) in enumerate(zip(parts_x[1:], parts_y[1:]))]
+            random.shuffle(parts)
+            for x, y, augment_idx in parts:
+                if x.strip() != y.strip():
+                    break
+
+            eot_template_path = os.path.join(ROOT_DIR, 'templates/EoT/EoT.txt')
+            with open(eot_template_path, 'r') as file:
+                eot_template_txt = file.read()
+
+            template_txt = eot_template_txt.format(x, y, "{}")
+            mute_type = "EoT"
+            return template_txt, mute_type
+        print("\t‣ EoT skipped (no existing top-gene model files)")
+
+    print("\t‣ FixedPrompts")
+    glob_pattern = f'{ROOT_DIR}/templates/FixedPrompts/*/*.txt'
+    print(f"ROOT_DIR: {ROOT_DIR}")
+    print(f"Glob pattern: {glob_pattern}")
+    prompt_templates = glob.glob(glob_pattern)
+    if not prompt_templates:
+        raise RuntimeError(f"No prompt templates found with glob pattern: {glob_pattern}. Check ROOT_DIR and template directory structure.")
+    template_path = np.random.choice(prompt_templates)
+    mute_type = os.path.basename(template_path).split('.')[0]  # Assuming the file extension needs to be removed
+    with open(template_path, 'r') as file:
+        template_txt = file.read()
+    with open(f'{ROOT_DIR}/templates/ConstantRules.txt', 'r') as file:
+        rules_txt = file.read()
+    template_txt = f'{template_txt}\n{rules_txt}'
 
     return template_txt, mute_type
 
@@ -145,6 +157,12 @@ def write_bash_script(input_filename_x=f'{SOTA_ROOT}/network.py',
     
     gene_id_parent = fetch_gene(input_filename_x)
     gene_id_child = fetch_gene(output_filename)
+    module_name = None
+    if python_file == 'src/llm_mutation.py':
+        module_name = 'src.llm_mutation'
+    elif python_file == 'src/llm_crossover.py':
+        module_name = 'src.llm_crossover'
+
     if python_file=='src/llm_mutation.py':
         template_txt, mute_type = generate_template(PROB_EOT, GEN_COUNT, TOP_N_GENES, 
                                                     SOTA_ROOT, SEED_NETWORK, ROOT_DIR)
@@ -158,24 +176,24 @@ def write_bash_script(input_filename_x=f'{SOTA_ROOT}/network.py',
         with open(file_path, 'w') as file:
             file.write(template_txt)
             
-        temp_text = f'{python_file} {input_filename_x} {output_filename} {file_path} --top_p {top_p} --temperature {temperature}'
-        python_runline = f"{CONDA_PYTHON} {temp_text} --apply_quality_control '{QC_CHECK_BOOL}' --inference_submission {INFERENCE_SUBMISSION}"
+        temp_text = f'-m {module_name} {input_filename_x} {output_filename} {file_path} --top_p {top_p} --temperature {temperature}'
+        python_runline = f"{CONDA_PYTHON} {temp_text} --apply_quality_control {QC_CHECK_BOOL} --inference_submission {INFERENCE_SUBMISSION}"
         
     elif python_file=='src/llm_crossover.py':
         gene_id_parent2 = fetch_gene(input_filename_y)
         GLOBAL_DATA_ANCESTRY = update_ancestry(gene_id_child, gene_id_parent, GLOBAL_DATA_ANCESTRY, 
                                                 mutation_type=None, gene_id_parent2=gene_id_parent2)
         
-        temp_text = f"{python_file} {input_filename_x} {input_filename_y} {output_filename} --top_p {top_p} --temperature {temperature}"
-        python_runline = f"{CONDA_PYTHON} {temp_text} --apply_quality_control '{QC_CHECK_BOOL}' --inference_submission {INFERENCE_SUBMISSION}"
+        temp_text = f"-m {module_name} {input_filename_x} {input_filename_y} {output_filename} --top_p {top_p} --temperature {temperature}"
+        python_runline = f"{CONDA_PYTHON} {temp_text} --apply_quality_control {QC_CHECK_BOOL} --inference_submission {INFERENCE_SUBMISSION}"
     else:
         raise ValueError("Invalid python_file argument")
 
     bash_script_content = LLM_BASH_SCRIPT_TEMPLATE.format(gpu, python_runline)
-    return bash_script_content
+    return bash_script_content, python_runline
 
 def create_bash_file(file_path, **kwargs):
-    bash_script_content = write_bash_script(**kwargs)
+    bash_script_content, python_runline = write_bash_script(**kwargs)
     # Extract the directory from the file path
     directory = os.path.dirname(file_path)
     # Check if the directory exists, and create it if it doesn't
@@ -185,15 +203,20 @@ def create_bash_file(file_path, **kwargs):
     with open(file_path, 'w') as file:
         file.write(bash_script_content)
     print(f"\t‣ Bash script saved to {file_path}", flush=True)
+    return python_runline
 
 def submit_bash(file_path, **kwargs):
     """ This should be general for subbing anything and returning:
         successful_sub_flag 
         job_id
     """
-    create_bash_file(file_path, **kwargs)
-    print(f"[DEBUG] Running subprocess: {[RUN_COMMAND, file_path]}")
-    result = subprocess.run([RUN_COMMAND, file_path], capture_output=True, text=True)
+    python_runline = create_bash_file(file_path, **kwargs)
+    if LOCAL:
+        print(f"[DEBUG] Running local python command: {python_runline}")
+        result = subprocess.run(python_runline, capture_output=True, text=True, shell=True)
+    else:
+        print(f"[DEBUG] Running subprocess: {[RUN_COMMAND, file_path]}")
+        result = subprocess.run([RUN_COMMAND, file_path], capture_output=True, text=True)
     print(f"[DEBUG] Subprocess finished. Return code: {result.returncode}")
     print(f"[DEBUG] STDOUT: {result.stdout}")
     print(f"[DEBUG] STDERR: {result.stderr}")
@@ -344,21 +367,25 @@ def submit_run(gene_id):
         # python_runline = f'python {train_file} -bs 216 -epoch 2 -network "models.network_{gene_id}" {tmp}'
         python_runline = f'{CONDA_PYTHON} {train_file} -network "models.network_{gene_id}" -timesteps 500'
         bash_script_content = PYTHON_BASH_SCRIPT_TEMPLATE.format(python_runline)
-        return bash_script_content
+        return bash_script_content, python_runline
 
     # This is for subbing the python code
     def create_bash_file_py(file_path, gene_id, **kwargs):
-        bash_script_content = write_bash_script_py(gene_id, **kwargs)
+        bash_script_content, python_runline = write_bash_script_py(gene_id, **kwargs)
         with open(file_path, 'w') as file:
             file.write(bash_script_content)
         print(f"\t‣ Bash Script Saved to {file_path}")
+        return python_runline
 
     def submit_bash_py(file_path, gene_id, **kwargs):
-        create_bash_file_py(file_path, gene_id, **kwargs)
+        python_runline = create_bash_file_py(file_path, gene_id, **kwargs)
         job_id = None
         successful_sub_flag = False
         local_output = None
-        result = subprocess.run([RUN_COMMAND, file_path], capture_output=True, text=True)
+        if LOCAL:
+            result = subprocess.run(python_runline, capture_output=True, text=True, shell=True)
+        else:
+            result = subprocess.run([RUN_COMMAND, file_path], capture_output=True, text=True)
         if LOCAL:
             local_output = result.stdout.strip() + '\n' + result.stderr.strip()
             print("\t‣ Output:", local_output, flush=True)
@@ -644,6 +671,13 @@ def delayed_mutate_check(offspring):
     return offspring
 
 def customCrossover(ind1, ind2):
+    if not gene_model_exists(ind1[0]) or not gene_model_exists(ind2[0]):
+        if not gene_model_exists(ind1[0]):
+            print(f"\t☠ Missing parent model file for crossover: {model_path_for_gene(ind1[0])}")
+        if not gene_model_exists(ind2[0]):
+            print(f"\t☠ Missing parent model file for crossover: {model_path_for_gene(ind2[0])}")
+        return creator.Individual([ind1[0]]), creator.Individual([ind2[0]])
+
     def combine_elements(ind1, ind2, temp_min=0.05, temp_max=0.1):
         """
         Combine elements of two individuals to create a new individual.
@@ -733,6 +767,10 @@ def customMutation(individual, indpb, temp_min=0.02, temp_max=0.35):
     # if random.random() < indpb: # TODO: connect this to temp
     out_dir = str(GENERATION)
     old_gene_id = individual[0]
+    if not gene_model_exists(old_gene_id):
+        print(f'\t☠ Missing parent model file for mutation: {model_path_for_gene(old_gene_id)}')
+        return creator.Individual([old_gene_id])
+
     # Generate a new gene ID
     new_gene_id = generate_random_string(length=24)
     print(f'Mutating: {old_gene_id} and Replaceing with: {new_gene_id}')
@@ -822,8 +860,14 @@ def true_nsga2(pop, k):
     # Clamp k to available population size (can be small if LLM generated broken code)
     k = min(k, len(pop))
     if k < 4:
-        # selTournamentDCD requires k to be a multiple of 4; fall back to simple selection
+        # selTournamentDCD requires k to be a multiple of 4
         return pop[:k] if k > 0 else pop
+    if k == len(pop) and (k % 4 != 0):
+        # DEAP raises when k == len(individuals) and k is not divisible by 4
+        return pop[:k]
+    if k % 4 != 0:
+        # Use deterministic fallback to avoid selTournamentDCD constraint errors
+        return pop[:k]
     new_pop = tools.selTournamentDCD(pop, k) # mults of 4
     return new_pop
 

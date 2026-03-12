@@ -1,3 +1,19 @@
+### Introduction to Model Optimization
+
+As an innovative AI researcher, you're known for your creative approach to improving models. Your latest task involves modifying a given code snippet to significantly reduce its parameters while preserving its performance.
+
+### Problem Statement
+
+You're given a code snippet and asked to apply modifications to reduce its parameters substantially while maintaining the model's performance.
+
+### Current Code Block
+
+Please provide the current code block that needs to be optimized.
+
+### Example Approach
+
+Here's a general example of how you might approach this task using Python and the PyTorch library. Let's assume we have a simple neural network model:
+
 
 ```python
 {}
