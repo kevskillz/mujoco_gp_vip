@@ -1,0 +1,11 @@
+python
+def calculate_area(length, width):
+    return length * width
+
+# Example usage:
+area = calculate_area(5, 3)
+print(area)  # Output: 15
+
+```python
+{}
+```

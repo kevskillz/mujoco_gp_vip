@@ -9,4 +9,4 @@ hostname
 module load uv
 
 export SERVER_HOSTNAME=$(hostname)
-uv run python run_improved.py mujoco_rl_output
+uv run python run_improved.py titanic_test

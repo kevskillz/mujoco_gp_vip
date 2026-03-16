@@ -234,7 +234,7 @@ def check_contents_for_error(contents):
     else:
         return None
         
-def check4job_completion(job_id, local_output=None, check_interval=60, timeout=120):
+def check4job_completion(job_id, local_output=None, check_interval=60, timeout=300):
     """
     Check for the completion of a job by searching for its output file and scanning for errors.
 
@@ -334,7 +334,7 @@ def create_individual(container, temp_min=0.05, temp_max=0.4):
     
 def submit_run(gene_id):
     def write_bash_script_py(gene_id, train_file=TRAIN_FILE):
-        python_runline = f'{UV_PYTHON} {train_file} -network "models.{MODEL}_{gene_id}" -timesteps 500'
+        python_runline = f'{UV_PYTHON} {train_file} -network "models.{MODEL}_{gene_id}" -timesteps 200000'
         bash_script_content = PYTHON_BASH_SCRIPT_TEMPLATE.format(python_runline)
         return bash_script_content
 
@@ -417,10 +417,12 @@ def check4results(gene_id):
         results_path = f'{SOTA_ROOT}/results/{gene_id}_results.txt'
         with open(results_path, 'r') as file:
             results = file.read()
-        results = results.split(',')
-        # Parse mean_reward as single-objective fitness
+        results = [x.strip() for x in results.split(',')]
         mean_reward = float(results[0])
-        fitness = (mean_reward,)
+        # Backward-compatible parsing: older logs may only contain 3 values.
+        mean_distance = float(results[3]) if len(results) > 3 else 0.0
+        mean_control_cost = float(results[4]) if len(results) > 4 else np.inf
+        fitness = (mean_reward, mean_distance, mean_control_cost)
         fitness = tuple(fitness)
         
         GLOBAL_DATA[gene_id]['status'] = 'completed'
@@ -431,7 +433,7 @@ def check4results(gene_id):
     else:
         pass
     
-def check_and_update_fitness(population, timeout=CUF_TIMEOUT, loop_delay=60*30):
+def check_and_update_fitness(population, timeout=CUF_TIMEOUT, loop_delay=60*5):
     """ 
     This function submits jobs and then if submitted it checks for four possibilities.
     

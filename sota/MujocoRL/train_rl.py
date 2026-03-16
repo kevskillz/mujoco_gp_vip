@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import argparse
 import importlib
 import gymnasium as gym
@@ -9,7 +10,14 @@ from stable_baselines3 import PPO
 from eval import evaluate_model
 
 
-def main(gene_id, timesteps=500000):
+def main(
+    gene_id,
+    timesteps=500000,
+    eval_episodes=None,
+    eval_max_steps=None,
+    model_dir="sota/MujocoRL/trained_models",
+    stats_dir="sota/MujocoRL/stats",
+):
 
     module = importlib.import_module(f"models.network_{gene_id}")
 
@@ -52,18 +60,26 @@ def main(gene_id, timesteps=500000):
         return
 
     model.learn(total_timesteps=timesteps)
+    os.makedirs(model_dir, exist_ok=True)
+    model_path = os.path.join(model_dir, f"{gene_id}.zip")
+    model.save(model_path)
+
 
     # Evaluate using eval.py
-    if timesteps <= 10000:
-        num_eval_episodes = 1
-        max_eval_steps = 200  # quick smoke test
+    if eval_episodes is None:
+        num_eval_episodes = 1 if timesteps <= 10000 else 10
     else:
-        num_eval_episodes = 10
-        max_eval_steps = 1000
+        num_eval_episodes = eval_episodes
+    if eval_max_steps is None:
+        max_eval_steps = 200 if timesteps <= 10000 else 1000
+    else:
+        max_eval_steps = eval_max_steps
 
-    mean_reward, std_reward, _ = evaluate_model(
+    mean_reward, std_reward, rewards, metrics = evaluate_model(
         model, env, num_episodes=num_eval_episodes, max_steps=max_eval_steps
     )
+    mean_distance = float(metrics.get("mean_distance", 0.0))
+    mean_control_cost = float(metrics.get("mean_control_cost", 0.0))
     train_time = time.time() - start_time
 
     # Save results under the SOTA_ROOT/results directory (where run_improved.py expects them)
@@ -71,9 +87,39 @@ def main(gene_id, timesteps=500000):
     results_dir = os.path.join(script_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
     with open(os.path.join(results_dir, f"{gene_id}_results.txt"), "w") as f:
-        f.write(f"{mean_reward},{std_reward},{train_time}")
+        # Backward-compatible prefix remains mean_reward,std_reward,train_time.
+        f.write(f"{mean_reward},{std_reward},{train_time},{mean_distance},{mean_control_cost}")
 
-    print(f"Mean reward: {mean_reward}, Std: {std_reward}, Time: {train_time:.1f}s")
+    os.makedirs(stats_dir, exist_ok=True)
+    stats_path = os.path.join(stats_dir, f"{gene_id}_stats.json")
+    with open(stats_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "gene_id": gene_id,
+                "timesteps": timesteps,
+                "num_eval_episodes": num_eval_episodes,
+                "max_eval_steps": max_eval_steps,
+                "train_time_sec": train_time,
+                "mean_reward": mean_reward,
+                "std_reward": std_reward,
+                "mean_distance": mean_distance,
+                "mean_control_cost": mean_control_cost,
+                "model_path": model_path,
+                "rewards": rewards,
+                "distances": metrics.get("distances", []),
+                "control_costs": metrics.get("control_costs", []),
+            },
+            f,
+            indent=2,
+        )
+
+    print(
+        "Mean reward: "
+        f"{mean_reward}, Std: {std_reward}, Distance: {mean_distance}, "
+        f"CtrlCost: {mean_control_cost}, Time: {train_time:.1f}s"
+    )
+    print(f"Saved model: {model_path}")
+    print(f"Saved stats: {stats_path}")
     print("Job Done")
 
 
@@ -83,9 +129,24 @@ if __name__ == "__main__":
                         help='Module path like "models.network_XXXX"')
     parser.add_argument("-timesteps", type=int, default=500000,
                         help="Total training timesteps")
+    parser.add_argument("-eval_episodes", type=int, default=None,
+                        help="Optional number of evaluation episodes")
+    parser.add_argument("-eval_max_steps", type=int, default=None,
+                        help="Optional max steps per evaluation episode")
+    parser.add_argument("-model_dir", type=str, default="sota/MujocoRL/trained_models",
+                        help="Directory to save trained model zip")
+    parser.add_argument("-stats_dir", type=str, default="sota/MujocoRL/stats",
+                        help="Directory to save evaluation stats json")
     args = parser.parse_args()
 
     # Extract gene_id from module path: "models.network_XXXX" -> "XXXX"
     gene_id = args.network.replace("models.network_", "")
 
-    main(gene_id, timesteps=args.timesteps)
+    main(
+        gene_id,
+        timesteps=args.timesteps,
+        eval_episodes=args.eval_episodes,
+        eval_max_steps=args.eval_max_steps,
+        model_dir=args.model_dir,
+        stats_dir=args.stats_dir,
+    )

@@ -15,6 +15,15 @@ import gymnasium as gym
 from stable_baselines3 import PPO
 
 
+def _get_x_position(env, info=None):
+    if isinstance(info, dict) and info.get("x_position") is not None:
+        return float(info["x_position"])
+    try:
+        return float(env.unwrapped.data.qpos[0])
+    except (AttributeError, IndexError, TypeError):
+        return None
+
+
 def evaluate_model(model, env, num_episodes=10, max_steps=1000):
     """
     Run evaluation episodes on a trained model.
@@ -40,23 +49,48 @@ def evaluate_model(model, env, num_episodes=10, max_steps=1000):
         Per-episode total rewards.
     """
     rewards = []
+    distances = []
+    control_costs = []
     for ep in range(num_episodes):
-        obs, _ = env.reset()
+        obs, reset_info = env.reset()
         done = False
         total_reward = 0
         step_count = 0
+        # Reset info may omit position, so fall back to MuJoCo state.
+        start_x = _get_x_position(env, reset_info)
+        end_x = start_x
+        ep_ctrl_cost = 0.0
         while not done and step_count < max_steps:
             action, _ = model.predict(obs, deterministic=True)
-            obs, reward, terminated, truncated, _ = env.step(action)
+            obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
             total_reward += reward
             step_count += 1
+            current_x = _get_x_position(env, info)
+            if current_x is not None:
+                end_x = current_x
+            if isinstance(info, dict) and info.get("reward_ctrl") is not None:
+                # HalfCheetah typically reports reward_ctrl as a negative penalty.
+                ep_ctrl_cost += float(-info["reward_ctrl"])
+        distance = float(end_x - start_x) if (start_x is not None and end_x is not None) else 0.0
+        mean_ctrl_cost = ep_ctrl_cost / max(step_count, 1)
         rewards.append(total_reward)
-        print(f"  Episode {ep+1:2d}: reward = {total_reward:8.2f}  steps = {step_count}")
+        distances.append(distance)
+        control_costs.append(mean_ctrl_cost)
+        print(
+            f"  Episode {ep+1:2d}: reward = {total_reward:8.2f}  "
+            f"distance = {distance:8.2f}  ctrl_cost = {mean_ctrl_cost:8.4f}  steps = {step_count}"
+        )
 
     mean_reward = float(np.mean(rewards))
     std_reward = float(np.std(rewards))
-    return mean_reward, std_reward, rewards
+    metrics = {
+        "mean_distance": float(np.mean(distances)) if distances else 0.0,
+        "mean_control_cost": float(np.mean(control_costs)) if control_costs else 0.0,
+        "distances": distances,
+        "control_costs": control_costs,
+    }
+    return mean_reward, std_reward, rewards, metrics
 
 
 def main():
@@ -82,7 +116,7 @@ def main():
     print(f"\n{'='*50}")
     print(f"  Evaluating {args.episodes} episodes on {env_id}")
     print(f"{'='*50}")
-    mean_reward, std_reward, rewards = evaluate_model(
+    mean_reward, std_reward, rewards, metrics = evaluate_model(
         model, env, num_episodes=args.episodes, max_steps=args.max_steps
     )
 
@@ -91,6 +125,8 @@ def main():
     print(f"{'='*50}")
     print(f"  Mean reward:    {mean_reward:8.2f}")
     print(f"  Std reward:     {std_reward:8.2f}")
+    print(f"  Mean distance:  {metrics['mean_distance']:8.2f}")
+    print(f"  Mean ctrl cost: {metrics['mean_control_cost']:8.4f}")
     print(f"  Min reward:     {min(rewards):8.2f}")
     print(f"  Max reward:     {max(rewards):8.2f}")
     print(f"{'='*50}\n")

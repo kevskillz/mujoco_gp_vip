@@ -3,7 +3,7 @@
 #SBATCH -t 8:00:00
 #SBATCH --nodes=1
 #SBATCH -G 2
-#SBATCH -C "A100-80GB|H100|H200"
+#SBATCH -C "H100|H200"
 #SBATCH --mem 160G
 #SBATCH -c 16
 echo "launching LLM Server"
@@ -24,4 +24,4 @@ echo "Writing server hostname '$SERVER_HOSTNAME' to file: $HOSTNAME_FILE"
 echo "$SERVER_HOSTNAME" > "$HOSTNAME_FILE"
 echo "Starting LLM server on host: $SERVER_HOSTNAME"
 
-uv run uvicorn server:app --host $SERVER_HOSTNAME --port 8137 --workers 1
+uv run uvicorn server:app --host $SERVER_HOSTNAME --port 10420 --workers 1

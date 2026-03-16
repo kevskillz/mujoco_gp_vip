@@ -12,4 +12,4 @@ module load uv
 source ~/.bashrc
 # Set the TOKENIZERS_PARALLELISM environment variable if needed
 export TOKENIZERS_PARALLELISM=false
-uv run python llm_crossover.py '/storage/ice1/8/2/amcdaniel39/llm-guided-evolution-fork/sota/Titanic/model.py' '/storage/ice1/8/2/amcdaniel39/llm-guided-evolution-fork/sota/Titanic/models/Menghao/model_x.py' '/storage/ice1/8/2/amcdaniel39/llm-guided-evolution-fork/sota/Titanic/models/Menghao/model_z.py'  --top_p 0.15   --temperature 0.1 --apply_quality_control 'True' --bit 8
+uv run python llm_crossover.py '/home/hice1/agudeti3/llm-guided-evolution-fork/sota/MujocoRL/network.py' '/home/hice1/agudeti3/llm-guided-evolution-fork/sota/MujocoRL/models/Menghao/model_x.py' '/home/hice1/agudeti3/llm-guided-evolution-fork/sota/MujocoRL/models/Menghao/model_z.py'  --top_p 0.15   --temperature 0.1 --apply_quality_control 'True' --bit 8

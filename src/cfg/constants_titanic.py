@@ -25,7 +25,7 @@ TRAIN_FILE = os.path.join(SOTA_ROOT, "train_rl.py")
 
 #: Output directory for intermediate generation data
 OUTPUT_DIR = "mujoco_rl_output"
-PORT = 8137
+PORT = 10420
 
 CLUSTER = "pace-ice"
 LLM_MODEL = 'llama3.3'
@@ -40,7 +40,7 @@ INFERENCE_SUBMISSION = True
 CUF_TIMEOUT = 3600 * 30  # 30 hours
 
 #: Whether to run llm-ge locally (True) or distribute across a slurm cluster (False)
-LOCAL = True
+LOCAL = False
 if LOCAL:
 	RUN_COMMAND = 'bash'
 	DELAYED_CHECK = False
@@ -56,14 +56,14 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 UV_PYTHON = "uv run python"
 
 #: LLM GPU constraint string for SLURM
-LLM_GPU = 'A100-40GB|A100-80GB|H100|V100-16GB|V100-32GB|RTX6000|A40|L40S'
+LLM_GPU = 'nvidia-gpu'
 
 #: Template script for submitting job for evaluation.
 PYTHON_BASH_SCRIPT_TEMPLATE = """#!/bin/bash
 #SBATCH --job-name=evaluateGene
 #SBATCH -t 8:00:00
 #SBATCH --gres=gpu:1
-#SBATCH -C "A100-40GB|A100-80GB|H100|V100-16GB|V100-32GB|RTX6000|A40|L40S"
+#SBATCH -C "nvidia-gpu"
 #SBATCH --mem-per-gpu 16G
 #SBATCH -n 12
 #SBATCH -N 1
@@ -101,8 +101,8 @@ export HUGGINGFACE_HUB_TOKEN="${{HF_TOKEN}}"
 """
 Evolution Constants/Params
 """
-#: Tuple of fitness weights. (1.0,) = maximise mean reward (single-objective).
-FITNESS_WEIGHTS = (1.0,)
+#: 3-objective setup: maximize reward and distance, minimize control cost.
+FITNESS_WEIGHTS = (1.0, 1.0, -1.0)
 INVALID_FITNESS_MAX = tuple([float(x * np.inf * -1) for x in FITNESS_WEIGHTS])
 #: A unique placeholder value used before fitness is evaluated
 PLACEHOLDER_FITNESS = tuple([int(x * 9999999999 * -1) for x in FITNESS_WEIGHTS])
@@ -111,8 +111,8 @@ GENERATION = 0
 PROB_QC = 0.0
 PROB_EOT = 0.0  # Disable EoT for initial RL runs (needs prior elite genes)
 num_generations = 30  # Number of generations
-start_population_size = 4  # Starting population size
-population_size = 2  # Population size each generation
+start_population_size = 32  # Starting population size
+population_size = 32  # Population size each generation
 crossover_probability = 0.35  # Probability of mating two individuals
 mutation_probability = 0.8  # Probability of mutating an individual
 num_elites = 44
