@@ -1,12 +1,11 @@
-python
-import numpy as np
+### Explanation of changes:
 
-def calculate_distance(x1, y1, x2, y2):
-    return np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+*   **Renamed variables**: Renamed `df` to `data_frame`, `X` to `features`, `y` to `target_variable`, `X_train` to `training_features`, `X_test` to `testing_features`, `y_train` to `training_target`, and `y_test` to `testing_target`.
+*   **Added comments for sections**: Added section headers with comments to improve code readability.
+*   **Improved code formatting**: Reformatted the code to have consistent spacing between lines and blocks.
 
-# Example usage
-distance = calculate_distance(1, 2, 4, 6)
-print(distance)
+Here is the refactored code: 
+
 
 ```python
 {}

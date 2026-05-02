@@ -54,10 +54,12 @@ def main(
         results_dir = os.path.join(script_dir, "results")
         os.makedirs(results_dir, exist_ok=True)
         with open(os.path.join(results_dir, f"{gene_id}_results.txt"), "w") as f:
-            f.write(f"-999999.0,0.0,{train_time}")
+            f.write(f"-999999.0,0.0,{train_time},999999999")
         print(f"Mean reward: -999999.0, Std: 0.0, Time: {train_time:.1f}s")
         print("Job Done")
         return
+
+    param_count = sum(p.numel() for p in model.policy.parameters())
 
     model.learn(total_timesteps=timesteps)
     os.makedirs(model_dir, exist_ok=True)
@@ -78,8 +80,6 @@ def main(
     mean_reward, std_reward, rewards, metrics = evaluate_model(
         model, env, num_episodes=num_eval_episodes, max_steps=max_eval_steps
     )
-    mean_distance = float(metrics.get("mean_distance", 0.0))
-    mean_control_cost = float(metrics.get("mean_control_cost", 0.0))
     train_time = time.time() - start_time
 
     # Save results under the SOTA_ROOT/results directory (where run_improved.py expects them)
@@ -87,8 +87,7 @@ def main(
     results_dir = os.path.join(script_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
     with open(os.path.join(results_dir, f"{gene_id}_results.txt"), "w") as f:
-        # Backward-compatible prefix remains mean_reward,std_reward,train_time.
-        f.write(f"{mean_reward},{std_reward},{train_time},{mean_distance},{mean_control_cost}")
+        f.write(f"{mean_reward},{std_reward},{train_time},{param_count}")
 
     os.makedirs(stats_dir, exist_ok=True)
     stats_path = os.path.join(stats_dir, f"{gene_id}_stats.json")
@@ -102,12 +101,9 @@ def main(
                 "train_time_sec": train_time,
                 "mean_reward": mean_reward,
                 "std_reward": std_reward,
-                "mean_distance": mean_distance,
-                "mean_control_cost": mean_control_cost,
+                "param_count": param_count,
                 "model_path": model_path,
                 "rewards": rewards,
-                "distances": metrics.get("distances", []),
-                "control_costs": metrics.get("control_costs", []),
             },
             f,
             indent=2,
@@ -115,8 +111,7 @@ def main(
 
     print(
         "Mean reward: "
-        f"{mean_reward}, Std: {std_reward}, Distance: {mean_distance}, "
-        f"CtrlCost: {mean_control_cost}, Time: {train_time:.1f}s"
+        f"{mean_reward}, Std: {std_reward}, Params: {param_count}, Time: {train_time:.1f}s"
     )
     print(f"Saved model: {model_path}")
     print(f"Saved stats: {stats_path}")

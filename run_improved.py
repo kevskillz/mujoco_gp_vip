@@ -224,11 +224,13 @@ def check_contents_for_error(contents):
     bool: True if job completed successfully, False if error, None if neither.  
     """
 
+    lower = contents.lower()
     # Check for error indicators in the file
-    if "traceback" in contents.lower() or "slurmstepd: error" in contents.lower():
+    error_patterns = ("traceback", "slurmstepd: error", "command not found", "no module named")
+    if any(p in lower for p in error_patterns):
         print("\t☠ Error Found in LLM Job Output.", flush=True)
         return False
-    elif "job done" in contents.lower():
+    elif "job done" in lower:
         print("\t☑ LLM Job Completed Successfully.", flush=True)
         return True
     else:
@@ -419,11 +421,8 @@ def check4results(gene_id):
             results = file.read()
         results = [x.strip() for x in results.split(',')]
         mean_reward = float(results[0])
-        # Backward-compatible parsing: older logs may only contain 3 values.
-        mean_distance = float(results[3]) if len(results) > 3 else 0.0
-        mean_control_cost = float(results[4]) if len(results) > 4 else np.inf
-        fitness = (mean_reward, mean_distance, mean_control_cost)
-        fitness = tuple(fitness)
+        param_count = float(results[3]) if len(results) > 3 else float('inf')
+        fitness = (mean_reward, param_count)
         
         GLOBAL_DATA[gene_id]['status'] = 'completed'
         GLOBAL_DATA[gene_id]['fitness'] = fitness
@@ -786,8 +785,8 @@ def load_checkpoint(folder_name="checkpoints", checkpoint_file=None):
     if not os.path.exists(folder_name):
         return None, None
     if checkpoint_file is None:
-        checkpoint_files = sorted(os.listdir(folder_name), reverse=True)
-        checkpoint_file = checkpoint_files[0] if checkpoint_files else None
+        pkl_files = sorted([f for f in os.listdir(folder_name) if f.endswith('.pkl')], reverse=True)
+        checkpoint_file = pkl_files[0] if pkl_files else None
     if checkpoint_file:
         filepath = os.path.join(folder_name, checkpoint_file)
         with open(filepath, 'rb') as file:

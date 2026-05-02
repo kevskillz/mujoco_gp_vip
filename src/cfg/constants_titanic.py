@@ -70,6 +70,10 @@ PYTHON_BASH_SCRIPT_TEMPLATE = """#!/bin/bash
 echo "Launching Python Evaluation"
 hostname
 
+module load cuda
+module load uv
+export CUDA_VISIBLE_DEVICES=0
+
 export HF_HOME=/storage/ice-shared/vip-vvk/llm_storage/
 export HF_TOKEN="${{HF_TOKEN}}"
 export HUGGINGFACE_HUB_TOKEN="${{HF_TOKEN}}"
@@ -90,6 +94,10 @@ LLM_BASH_SCRIPT_TEMPLATE = """#!/bin/bash
 echo "Launching AIsurBL"
 hostname
 
+module load cuda
+module load uv
+export CUDA_VISIBLE_DEVICES=0
+
 export HF_HOME=/storage/ice-shared/vip-vvk/llm_storage/
 export HF_TOKEN="${{HF_TOKEN}}"
 export HUGGINGFACE_HUB_TOKEN="${{HF_TOKEN}}"
@@ -101,8 +109,8 @@ export HUGGINGFACE_HUB_TOKEN="${{HF_TOKEN}}"
 """
 Evolution Constants/Params
 """
-#: 3-objective setup: maximize reward and distance, minimize control cost.
-FITNESS_WEIGHTS = (1.0, 1.0, -1.0)
+#: 2-objective setup: maximize reward, minimize parameter count.
+FITNESS_WEIGHTS = (1.0, -1.0)
 INVALID_FITNESS_MAX = tuple([float(x * np.inf * -1) for x in FITNESS_WEIGHTS])
 #: A unique placeholder value used before fitness is evaluated
 PLACEHOLDER_FITNESS = tuple([int(x * 9999999999 * -1) for x in FITNESS_WEIGHTS])

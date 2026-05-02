@@ -20,3 +20,5 @@ output/
 **/results/
 **/llmge_models/
 slurm-*.out
+.gitignore
+titanic_test/*

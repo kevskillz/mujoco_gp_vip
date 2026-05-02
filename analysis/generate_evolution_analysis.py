@@ -9,20 +9,19 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import cm
 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "analysis"
-SEED_GENE_ID = "xXxjOH38bl0QwZU7tCi3JJAEICx"
+PARAM_COUNT_PLOT_LIMIT = 200_000  # exclude extreme outliers from Pareto scatter view
 DEFAULT_LOGS = [
-    ROOT / "slurm-4442153.out",
-    ROOT / "slurm-4457323.out",
+    ROOT / "slurm-5142024.out",
+    ROOT / "slurm-5149662.out",
 ]
 
 GENERATION_RE = re.compile(r"STARTING GENERATION:\s+(\d+)")
 FITNESS_RE = re.compile(
-    r"Fitness:\s+\(([^,]+),\s*([^,]+),\s*([^)]+)\), Submission Flag:\s+(True|False)"
+    r"Fitness:\s+\(([^,]+),\s*([^)]+)\), Submission Flag:\s+(True|False)"
 )
 RUNTIME_RE = re.compile(r"Runtime:\s+(\d+)\s+min,\s+Status:\s+(.+)$")
 JOB_RE = re.compile(r"LLM Job-ID:\s+(.+)$")
@@ -33,8 +32,7 @@ class SnapshotRecord:
     generation: int
     gene_id: str
     reward: float
-    distance: float
-    control_cost: float
+    param_count: float
     submission_flag: bool
     runtime_min: int | None
     status: str
@@ -45,9 +43,9 @@ class SnapshotRecord:
     def is_valid(self) -> bool:
         return (
             math.isfinite(self.reward)
-            and math.isfinite(self.distance)
-            and math.isfinite(self.control_cost)
+            and math.isfinite(self.param_count)
             and self.reward > -1e8
+            and self.param_count < 1e8  # excludes 999999999 sentinel
         )
 
     @property
@@ -56,9 +54,9 @@ class SnapshotRecord:
             return "valid"
         if not self.submission_flag:
             return "submission_failed"
-        if any(not math.isfinite(x) for x in (self.reward, self.distance, self.control_cost)):
+        if not math.isfinite(self.reward) or not math.isfinite(self.param_count):
             return "runtime_invalid"
-        if self.reward <= -1e8:
+        if self.reward <= -1e8 or self.param_count >= 1e8:
             return "hard_failure"
         return "other_failure"
 
@@ -106,9 +104,8 @@ def parse_generation_snapshots(log_path: Path) -> list[SnapshotRecord]:
 
                 if fitness_match:
                     reward = parse_float(fitness_match.group(1))
-                    distance = parse_float(fitness_match.group(2))
-                    control_cost = parse_float(fitness_match.group(3))
-                    submission_flag = fitness_match.group(4) == "True"
+                    param_count = parse_float(fitness_match.group(2))
+                    submission_flag = fitness_match.group(3) == "True"
                     runtime_min = int(runtime_match.group(1)) if runtime_match else None
                     status = runtime_match.group(2) if runtime_match else "unknown"
                     job_id = job_match.group(1).strip() if job_match else "unknown"
@@ -117,8 +114,7 @@ def parse_generation_snapshots(log_path: Path) -> list[SnapshotRecord]:
                             generation=generation,
                             gene_id=gene_id,
                             reward=reward,
-                            distance=distance,
-                            control_cost=control_cost,
+                            param_count=param_count,
                             submission_flag=submission_flag,
                             runtime_min=runtime_min,
                             status=status,
@@ -143,8 +139,7 @@ def dedupe_individuals(records: list[SnapshotRecord]) -> list[dict]:
                 "last_generation": rec.generation,
                 "appearances": 1,
                 "reward": rec.reward,
-                "distance": rec.distance,
-                "control_cost": rec.control_cost,
+                "param_count": rec.param_count,
                 "runtime_min": rec.runtime_min,
                 "submission_flag": rec.submission_flag,
                 "status": rec.status,
@@ -160,17 +155,18 @@ def dedupe_individuals(records: list[SnapshotRecord]) -> list[dict]:
 
 
 def is_dominated(candidate: dict, others: list[dict]) -> bool:
+    """Return True if any other solution dominates candidate.
+    Dominance: maximize reward, minimize param_count.
+    """
     for other in others:
         if other["gene_id"] == candidate["gene_id"]:
             continue
         dominates = (
             other["reward"] >= candidate["reward"]
-            and other["distance"] >= candidate["distance"]
-            and other["control_cost"] <= candidate["control_cost"]
+            and other["param_count"] <= candidate["param_count"]
             and (
                 other["reward"] > candidate["reward"]
-                or other["distance"] > candidate["distance"]
-                or other["control_cost"] < candidate["control_cost"]
+                or other["param_count"] < candidate["param_count"]
             )
         )
         if dominates:
@@ -223,7 +219,7 @@ def cluster_labels(snapshot_records: list[SnapshotRecord]) -> tuple[np.ndarray, 
         return np.array([]), []
 
     features = np.array(
-        [[rec.reward, rec.distance, -rec.control_cost] for rec in valid],
+        [[rec.reward, -rec.param_count] for rec in valid],
         dtype=float,
     )
     features = standardize(features)
@@ -263,11 +259,11 @@ def build_generation_summary(records: list[SnapshotRecord]) -> list[dict]:
                 "max_reward_valid": (
                     round(float(np.max([rec.reward for rec in valid])), 6) if valid else ""
                 ),
-                "mean_distance_valid": (
-                    round(float(np.mean([rec.distance for rec in valid])), 6) if valid else ""
+                "min_param_count_valid": (
+                    round(float(np.min([rec.param_count for rec in valid])), 0) if valid else ""
                 ),
-                "min_control_cost_valid": (
-                    round(float(np.min([rec.control_cost for rec in valid])), 6) if valid else ""
+                "max_param_count_valid": (
+                    round(float(np.max([rec.param_count for rec in valid])), 0) if valid else ""
                 ),
             }
         )
@@ -284,7 +280,9 @@ def build_markdown_report(
     valid_unique = [rec for rec in unique_records if rec["is_valid"]]
     invalid_unique = [rec for rec in unique_records if not rec["is_valid"]]
     top_reward = sorted(valid_unique, key=lambda row: row["reward"], reverse=True)[:15]
-    top_distance = sorted(valid_unique, key=lambda row: row["distance"], reverse=True)[:15]
+    top_efficient = sorted(
+        valid_unique, key=lambda row: (-row["reward"], row["param_count"])
+    )[:15]
 
     lines: list[str] = []
     lines.append("# Evolution Run Analysis")
@@ -302,42 +300,43 @@ def build_markdown_report(
     lines.append("")
     lines.append("## Top Individuals By Reward")
     lines.append("")
-    lines.append("| Rank | Gene ID | First Gen | Reward | Distance | Ctrl Cost | Appearances |")
-    lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: |")
+    lines.append("| Rank | Gene ID | First Gen | Reward | Param Count | Appearances |")
+    lines.append("| --- | --- | ---: | ---: | ---: | ---: |")
     for idx, row in enumerate(top_reward, start=1):
         lines.append(
             f"| {idx} | `{row['gene_id']}` | {row['first_generation']} | "
-            f"{row['reward']:.4f} | {row['distance']:.4f} | {row['control_cost']:.4f} | {row['appearances']} |"
+            f"{row['reward']:.4f} | {int(row['param_count'])} | {row['appearances']} |"
         )
     lines.append("")
-    lines.append("## Top Individuals By Distance")
+    lines.append("## Top Individuals By Efficiency (High Reward, Low Params)")
     lines.append("")
-    lines.append("| Rank | Gene ID | First Gen | Reward | Distance | Ctrl Cost |")
-    lines.append("| --- | --- | ---: | ---: | ---: | ---: |")
-    for idx, row in enumerate(top_distance, start=1):
+    lines.append("| Rank | Gene ID | First Gen | Reward | Param Count |")
+    lines.append("| --- | --- | ---: | ---: | ---: |")
+    for idx, row in enumerate(top_efficient, start=1):
         lines.append(
             f"| {idx} | `{row['gene_id']}` | {row['first_generation']} | "
-            f"{row['reward']:.4f} | {row['distance']:.4f} | {row['control_cost']:.4f} |"
+            f"{row['reward']:.4f} | {int(row['param_count'])} |"
         )
     lines.append("")
-    lines.append("## Overall Pareto Frontier")
+    lines.append("## Overall Pareto Frontier (Maximize Reward, Minimize Param Count)")
     lines.append("")
-    lines.append("| Gene ID | First Gen | Reward | Distance | Ctrl Cost |")
-    lines.append("| --- | ---: | ---: | ---: | ---: |")
+    lines.append("| Gene ID | First Gen | Reward | Param Count |")
+    lines.append("| --- | ---: | ---: | ---: |")
     for row in sorted(frontier, key=lambda item: item["reward"], reverse=True):
         lines.append(
             f"| `{row['gene_id']}` | {row['first_generation']} | "
-            f"{row['reward']:.4f} | {row['distance']:.4f} | {row['control_cost']:.4f} |"
+            f"{row['reward']:.4f} | {int(row['param_count'])} |"
         )
     lines.append("")
     lines.append("## Generation Trend")
     lines.append("")
-    lines.append("| Gen | Pop Size | Valid | Invalid | Mean Reward | Max Reward | Mean Distance | Min Ctrl Cost |")
+    lines.append("| Gen | Pop Size | Valid | Invalid | Mean Reward | Max Reward | Min Params | Max Params |")
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     for row in generation_summary:
         lines.append(
             f"| {row['generation']} | {row['population_size']} | {row['valid_count']} | {row['invalid_count']} | "
-            f"{row['mean_reward_valid']} | {row['max_reward_valid']} | {row['mean_distance_valid']} | {row['min_control_cost_valid']} |"
+            f"{row['mean_reward_valid']} | {row['max_reward_valid']} | "
+            f"{row['min_param_count_valid']} | {row['max_param_count_valid']} |"
         )
     return "\n".join(lines)
 
@@ -347,12 +346,12 @@ def prepare_plot_data(
     unique_records: list[dict],
 ):
     valid_unique = [rec for rec in unique_records if rec["is_valid"]]
-    distances = np.array([rec["distance"] for rec in valid_unique], dtype=float)
+    param_counts = np.array([rec["param_count"] for rec in valid_unique], dtype=float)
     rewards = np.array([rec["reward"] for rec in valid_unique], dtype=float)
-    costs = np.array([rec["control_cost"] for rec in valid_unique], dtype=float)
     generations = np.array([rec["first_generation"] for rec in valid_unique], dtype=float)
-    cost_norm = (costs.max() - costs) / max(costs.max() - costs.min(), 1e-9)
-    sizes = 50 + 180 * cost_norm
+    # Larger dot = fewer params (more efficient)
+    param_norm = (param_counts.max() - param_counts) / max(param_counts.max() - param_counts.min(), 1e-9)
+    sizes = 15 + 50 * param_norm
 
     valid_snapshots = [rec for rec in snapshot_records if rec.is_valid]
     labels, cluster_names = cluster_labels(valid_snapshots)
@@ -376,9 +375,8 @@ def prepare_plot_data(
 
     return {
         "valid_unique": valid_unique,
-        "distances": distances,
+        "param_counts": param_counts,
         "rewards": rewards,
-        "costs": costs,
         "generations": generations,
         "sizes": sizes,
         "valid_snapshots": valid_snapshots,
@@ -391,55 +389,23 @@ def prepare_plot_data(
     }
 
 
-def get_seed_unique_record(unique_records: list[dict]) -> dict | None:
-    for rec in unique_records:
-        if rec["gene_id"] == SEED_GENE_ID:
-            return rec
-    return None
+def _staircase_pareto(frontier: list[dict]) -> tuple[list[float], list[float]]:
+    """Build staircase (step) x/y arrays for the Pareto frontier.
 
-
-def get_seed_snapshots(snapshot_records: list[SnapshotRecord]) -> list[SnapshotRecord]:
-    return [rec for rec in snapshot_records if rec.gene_id == SEED_GENE_ID and rec.is_valid]
-
-
-def highlight_seed_2d(ax, x: float, y: float, label: str = "Seed baseline") -> None:
-    ax.scatter(
-        [x],
-        [y],
-        marker="*",
-        s=320,
-        color="#D62728",
-        edgecolors="black",
-        linewidths=1.2,
-        zorder=8,
-        label=label,
-    )
-    ax.annotate(
-        "seed",
-        (x, y),
-        xytext=(8, -12),
-        textcoords="offset points",
-        fontsize=9,
-        fontweight="bold",
-        color="#8B0000",
-    )
-
-
-def highlight_seed_3d(ax, x: float, y: float, z: float, label: str = "Seed baseline") -> None:
-    ax.scatter(
-        [x],
-        [y],
-        [z],
-        marker="*",
-        s=260,
-        color="#D62728",
-        edgecolors="black",
-        linewidths=1.1,
-        depthshade=False,
-        zorder=10,
-        label=label,
-    )
-    ax.text(x, y, z, "seed", fontsize=9, color="#8B0000")
+    Sorted by param_count ascending, the frontier is drawn as horizontal
+    steps at each reward level with vertical jumps between them.
+    """
+    points = sorted(frontier, key=lambda row: row["param_count"])
+    xs: list[float] = []
+    ys: list[float] = []
+    for i, pt in enumerate(points):
+        if i > 0:
+            # vertical jump: same x, previous y -> current y
+            xs.append(pt["param_count"])
+            ys.append(points[i - 1]["reward"])
+        xs.append(pt["param_count"])
+        ys.append(pt["reward"])
+    return xs, ys
 
 
 def plot_pareto_figure(
@@ -448,29 +414,26 @@ def plot_pareto_figure(
     output_path: Path,
 ) -> None:
     plt.style.use("seaborn-v0_8-whitegrid")
-    fig, ax_pareto = plt.subplots(figsize=(9, 8), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(9, 8), constrained_layout=True)
     plot_data = prepare_plot_data([], unique_records)
 
-    scatter = ax_pareto.scatter(
-        plot_data["distances"],
-        plot_data["rewards"],
-        c=plot_data["generations"],
-        s=plot_data["sizes"],
+    mask = plot_data["param_counts"] < PARAM_COUNT_PLOT_LIMIT
+    scatter = ax.scatter(
+        plot_data["param_counts"][mask],
+        plot_data["rewards"][mask],
+        c=plot_data["generations"][mask],
+        s=plot_data["sizes"][mask],
         cmap="viridis",
         alpha=0.75,
         edgecolors="none",
     )
 
-    frontier_points = sorted(frontier, key=lambda row: row["distance"])
-    ax_pareto.plot(
-        [row["distance"] for row in frontier_points],
-        [row["reward"] for row in frontier_points],
-        color="black",
-        linewidth=2,
-        label="Pareto frontier",
-    )
-    ax_pareto.scatter(
-        [row["distance"] for row in frontier_points],
+    step_xs, step_ys = _staircase_pareto(frontier)
+    ax.plot(step_xs, step_ys, color="black", linewidth=2, label="Pareto frontier")
+
+    frontier_points = sorted(frontier, key=lambda row: row["param_count"])
+    ax.scatter(
+        [row["param_count"] for row in frontier_points],
         [row["reward"] for row in frontier_points],
         color="gold",
         edgecolors="black",
@@ -479,25 +442,21 @@ def plot_pareto_figure(
     )
 
     for row in sorted(frontier_points, key=lambda item: item["reward"], reverse=True)[:6]:
-        ax_pareto.annotate(
+        ax.annotate(
             row["gene_id"][:10],
-            (row["distance"], row["reward"]),
+            (row["param_count"], row["reward"]),
             xytext=(6, 6),
             textcoords="offset points",
             fontsize=8,
         )
 
-    seed_record = get_seed_unique_record(unique_records)
-    if seed_record is not None:
-        highlight_seed_2d(ax_pareto, seed_record["distance"], seed_record["reward"])
-
-    ax_pareto.set_title("Pareto View of Unique Valid Individuals")
-    ax_pareto.set_xlabel("Mean distance")
-    ax_pareto.set_ylabel("Mean reward")
-    ax_pareto.set_xlim(left=0)
-    ax_pareto.set_ylim(bottom=0)
-    ax_pareto.legend(loc="lower right")
-    cbar = fig.colorbar(scatter, ax=ax_pareto)
+    ax.set_title("Pareto Frontier: Reward vs Parameter Count")
+    ax.set_xlabel("Parameter count (minimize →)")
+    ax.set_ylabel("Mean reward (maximize ↑)")
+    ax.set_xlim(right=PARAM_COUNT_PLOT_LIMIT)
+    ax.set_ylim(bottom=0)
+    ax.legend(loc="lower right")
+    cbar = fig.colorbar(scatter, ax=ax)
     cbar.set_label("First generation seen")
     fig.savefig(output_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
@@ -521,7 +480,7 @@ def plot_trend_figure(
             rec.reward,
             color=plot_data["cluster_color"][cluster_name],
             alpha=0.7,
-            s=28 + 2.2 * max(rec.distance, 0.0),
+            s=15,
             edgecolors="none",
         )
     ax_trend.plot(
@@ -542,7 +501,8 @@ def plot_trend_figure(
 
     handles = [
         plt.Line2D(
-            [0], [0], marker="o", color="w", label=name, markerfacecolor=plot_data["cluster_color"][name], markersize=8
+            [0], [0], marker="o", color="w", label=name,
+            markerfacecolor=plot_data["cluster_color"][name], markersize=8
         )
         for name in plot_data["cluster_names"]
     ]
@@ -553,178 +513,11 @@ def plot_trend_figure(
         ]
     )
 
-    seed_snapshots = get_seed_snapshots(snapshot_records)
-    if seed_snapshots:
-        ax_trend.plot(
-            [rec.generation for rec in seed_snapshots],
-            [rec.reward for rec in seed_snapshots],
-            color="#D62728",
-            linewidth=2,
-            linestyle=":",
-            label="Seed baseline",
-        )
-        highlight_seed_2d(ax_trend, seed_snapshots[0].generation, seed_snapshots[0].reward, label="Seed baseline")
-        handles.append(plt.Line2D([0], [0], color="#D62728", linewidth=2, linestyle=":", label="Seed baseline"))
-
     ax_trend.legend(handles=handles, loc="upper left")
     ax_trend.set_title("Generation Trend With Performance Clusters")
     ax_trend.set_xlabel("Generation")
     ax_trend.set_ylabel("Mean reward")
     ax_trend.set_xticks(plot_data["generation_values"])
-    fig.savefig(output_path, dpi=220, bbox_inches="tight")
-    plt.close(fig)
-
-
-def plot_pareto_3d_figure(
-    unique_records: list[dict],
-    frontier: list[dict],
-    output_path: Path,
-) -> None:
-    plt.style.use("seaborn-v0_8-whitegrid")
-    fig = plt.figure(figsize=(11, 9), constrained_layout=True)
-    ax = fig.add_subplot(111, projection="3d")
-    plot_data = prepare_plot_data([], unique_records)
-
-    scatter = ax.scatter(
-        plot_data["distances"],
-        plot_data["rewards"],
-        plot_data["costs"],
-        c=plot_data["generations"],
-        s=plot_data["sizes"],
-        cmap="viridis",
-        alpha=0.6,
-        depthshade=True,
-    )
-
-    frontier_points = sorted(frontier, key=lambda row: (row["distance"], row["reward"]))
-    ax.scatter(
-        [row["distance"] for row in frontier_points],
-        [row["reward"] for row in frontier_points],
-        [row["control_cost"] for row in frontier_points],
-        color="gold",
-        edgecolors="black",
-        s=120,
-        depthshade=False,
-        label="Pareto-optimal",
-    )
-
-    for row in sorted(frontier_points, key=lambda item: item["reward"], reverse=True)[:6]:
-        ax.text(
-            row["distance"],
-            row["reward"],
-            row["control_cost"],
-            row["gene_id"][:10],
-            fontsize=8,
-        )
-
-    seed_record = get_seed_unique_record(unique_records)
-    if seed_record is not None:
-        highlight_seed_3d(ax, seed_record["distance"], seed_record["reward"], seed_record["control_cost"])
-
-    ax.set_title("3D Objective Space With Pareto-Optimal Individuals Highlighted")
-    ax.set_xlabel("Mean distance")
-    ax.set_ylabel("Mean reward")
-    ax.set_zlabel("Mean control cost\n(lower is better)")
-    ax.set_xlim(left=0)
-    ax.set_ylim(bottom=0)
-    ax.view_init(elev=24, azim=-55)
-    ax.legend(loc="upper left")
-    cbar = fig.colorbar(scatter, ax=ax, shrink=0.75, pad=0.08)
-    cbar.set_label("First generation seen")
-    fig.savefig(output_path, dpi=220, bbox_inches="tight")
-    plt.close(fig)
-
-
-def plot_generation_3d_figure(
-    snapshot_records: list[SnapshotRecord],
-    unique_records: list[dict],
-    output_path: Path,
-) -> None:
-    plt.style.use("seaborn-v0_8-whitegrid")
-    fig = plt.figure(figsize=(11, 9), constrained_layout=True)
-    ax = fig.add_subplot(111, projection="3d")
-    plot_data = prepare_plot_data(snapshot_records, unique_records)
-    valid_snapshots = plot_data["valid_snapshots"]
-
-    if not valid_snapshots:
-        fig.savefig(output_path, dpi=220, bbox_inches="tight")
-        plt.close(fig)
-        return
-
-    generations = np.array([rec.generation for rec in valid_snapshots], dtype=float)
-    rewards = np.array([rec.reward for rec in valid_snapshots], dtype=float)
-    distances = np.array([rec.distance for rec in valid_snapshots], dtype=float)
-    costs = np.array([rec.control_cost for rec in valid_snapshots], dtype=float)
-    sizes = 28 + 2.2 * np.maximum(distances, 0.0)
-
-    cost_norm = (costs - costs.min()) / max(costs.max() - costs.min(), 1e-9)
-    colors = cm.plasma_r(cost_norm)
-    ax.scatter(
-        generations,
-        distances,
-        rewards,
-        c=colors,
-        s=sizes,
-        alpha=0.65,
-        depthshade=True,
-    )
-
-    best_by_generation: list[SnapshotRecord] = []
-    for generation in sorted({rec.generation for rec in valid_snapshots}):
-        bucket = [rec for rec in valid_snapshots if rec.generation == generation]
-        if bucket:
-            best_by_generation.append(max(bucket, key=lambda rec: rec.reward))
-
-    ax.plot(
-        [rec.generation for rec in best_by_generation],
-        [rec.distance for rec in best_by_generation],
-        [rec.reward for rec in best_by_generation],
-        color="black",
-        linewidth=2.2,
-        label="Best per generation",
-    )
-    ax.scatter(
-        [rec.generation for rec in best_by_generation],
-        [rec.distance for rec in best_by_generation],
-        [rec.reward for rec in best_by_generation],
-        color="#D95F02",
-        s=90,
-        depthshade=False,
-    )
-
-    for rec in best_by_generation[-4:]:
-        ax.text(rec.generation, rec.distance, rec.reward, rec.gene_id[:10], fontsize=8)
-
-    seed_snapshots = get_seed_snapshots(snapshot_records)
-    if seed_snapshots:
-        ax.plot(
-            [rec.generation for rec in seed_snapshots],
-            [rec.distance for rec in seed_snapshots],
-            [rec.reward for rec in seed_snapshots],
-            color="#D62728",
-            linewidth=2,
-            linestyle=":",
-            label="Seed baseline",
-        )
-        highlight_seed_3d(
-            ax,
-            seed_snapshots[0].generation,
-            seed_snapshots[0].distance,
-            seed_snapshots[0].reward,
-            label="Seed baseline",
-        )
-
-    ax.set_title("3D Generation Trajectory in Objective Space")
-    ax.set_xlabel("Generation")
-    ax.set_ylabel("Mean distance")
-    ax.set_zlabel("Mean reward")
-    ax.view_init(elev=24, azim=-48)
-    ax.legend(loc="upper left")
-
-    scalar_map = cm.ScalarMappable(cmap="plasma_r")
-    scalar_map.set_array(costs)
-    cbar = fig.colorbar(scalar_map, ax=ax, shrink=0.75, pad=0.08)
-    cbar.set_label("Mean control cost\n(lower is better)")
     fig.savefig(output_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
 
@@ -739,26 +532,23 @@ def plot_combined_figure(
     fig, (ax_pareto, ax_trend) = plt.subplots(1, 2, figsize=(18, 8), constrained_layout=True)
     plot_data = prepare_plot_data(snapshot_records, unique_records)
 
+    mask = plot_data["param_counts"] < PARAM_COUNT_PLOT_LIMIT
     scatter = ax_pareto.scatter(
-        plot_data["distances"],
-        plot_data["rewards"],
-        c=plot_data["generations"],
-        s=plot_data["sizes"],
+        plot_data["param_counts"][mask],
+        plot_data["rewards"][mask],
+        c=plot_data["generations"][mask],
+        s=plot_data["sizes"][mask],
         cmap="viridis",
         alpha=0.75,
         edgecolors="none",
     )
 
-    frontier_points = sorted(frontier, key=lambda row: row["distance"])
-    ax_pareto.plot(
-        [row["distance"] for row in frontier_points],
-        [row["reward"] for row in frontier_points],
-        color="black",
-        linewidth=2,
-        label="Pareto frontier",
-    )
+    step_xs, step_ys = _staircase_pareto(frontier)
+    ax_pareto.plot(step_xs, step_ys, color="black", linewidth=2, label="Pareto frontier")
+
+    frontier_points = sorted(frontier, key=lambda row: row["param_count"])
     ax_pareto.scatter(
-        [row["distance"] for row in frontier_points],
+        [row["param_count"] for row in frontier_points],
         [row["reward"] for row in frontier_points],
         color="gold",
         edgecolors="black",
@@ -769,24 +559,19 @@ def plot_combined_figure(
     for row in sorted(frontier_points, key=lambda item: item["reward"], reverse=True)[:6]:
         ax_pareto.annotate(
             row["gene_id"][:10],
-            (row["distance"], row["reward"]),
+            (row["param_count"], row["reward"]),
             xytext=(6, 6),
             textcoords="offset points",
             fontsize=8,
         )
 
-    seed_record = get_seed_unique_record(unique_records)
-    if seed_record is not None:
-        highlight_seed_2d(ax_pareto, seed_record["distance"], seed_record["reward"])
-
-    ax_pareto.set_title("Pareto View of Unique Valid Individuals")
-    ax_pareto.set_xlabel("Mean distance")
-    ax_pareto.set_ylabel("Mean reward")
-    ax_pareto.set_xlim(left=0)
+    ax_pareto.set_title("Pareto Frontier: Reward vs Parameter Count")
+    ax_pareto.set_xlabel("Parameter count (minimize →)")
+    ax_pareto.set_ylabel("Mean reward (maximize ↑)")
+    ax_pareto.set_xlim(right=PARAM_COUNT_PLOT_LIMIT)
     ax_pareto.set_ylim(bottom=0)
     ax_pareto.legend(loc="lower right")
-    cbar = fig.colorbar(scatter, ax=ax_pareto)
-    cbar.set_label("First generation seen")
+    fig.colorbar(scatter, ax=ax_pareto).set_label("First generation seen")
 
     random.seed(7)
     for rec, label in zip(plot_data["valid_snapshots"], plot_data["labels"]):
@@ -797,7 +582,7 @@ def plot_combined_figure(
             rec.reward,
             color=plot_data["cluster_color"][cluster_name],
             alpha=0.7,
-            s=28 + 2.2 * max(rec.distance, 0.0),
+            s=15,
             edgecolors="none",
         )
     ax_trend.plot(
@@ -818,7 +603,8 @@ def plot_combined_figure(
 
     handles = [
         plt.Line2D(
-            [0], [0], marker="o", color="w", label=name, markerfacecolor=plot_data["cluster_color"][name], markersize=8
+            [0], [0], marker="o", color="w", label=name,
+            markerfacecolor=plot_data["cluster_color"][name], markersize=8
         )
         for name in plot_data["cluster_names"]
     ]
@@ -828,25 +614,13 @@ def plot_combined_figure(
             plt.Line2D([0], [0], color="#D95F02", linewidth=2, linestyle="--", label="Best reward"),
         ]
     )
-    seed_snapshots = get_seed_snapshots(snapshot_records)
-    if seed_snapshots:
-        ax_trend.plot(
-            [rec.generation for rec in seed_snapshots],
-            [rec.reward for rec in seed_snapshots],
-            color="#D62728",
-            linewidth=2,
-            linestyle=":",
-            label="Seed baseline",
-        )
-        highlight_seed_2d(ax_trend, seed_snapshots[0].generation, seed_snapshots[0].reward, label="Seed baseline")
-        handles.append(plt.Line2D([0], [0], color="#D62728", linewidth=2, linestyle=":", label="Seed baseline"))
     ax_trend.legend(handles=handles, loc="upper left")
     ax_trend.set_title("Generation Trend With Performance Clusters")
     ax_trend.set_xlabel("Generation")
     ax_trend.set_ylabel("Mean reward")
     ax_trend.set_xticks(plot_data["generation_values"])
 
-    fig.suptitle("Evolution Analysis Across Generations 0-13", fontsize=16, fontweight="bold")
+    fig.suptitle("Evolution Analysis", fontsize=16, fontweight="bold")
     fig.savefig(output_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
 
@@ -860,7 +634,7 @@ def main() -> None:
         grouped: dict[int, list[SnapshotRecord]] = {}
         for rec in parsed:
             grouped.setdefault(rec.generation, []).append(rec)
-        # Later logs replace earlier generations, which handles checkpoint resumes cleanly.
+        # Later logs replace earlier generations, handling checkpoint resumes cleanly.
         records_by_generation.update(grouped)
 
     snapshot_records = [
@@ -879,8 +653,7 @@ def main() -> None:
             "generation": rec.generation,
             "gene_id": rec.gene_id,
             "reward": rec.reward,
-            "distance": rec.distance,
-            "control_cost": rec.control_cost,
+            "param_count": rec.param_count,
             "submission_flag": rec.submission_flag,
             "runtime_min": rec.runtime_min,
             "status": rec.status,
@@ -898,8 +671,7 @@ def main() -> None:
             "generation",
             "gene_id",
             "reward",
-            "distance",
-            "control_cost",
+            "param_count",
             "submission_flag",
             "runtime_min",
             "status",
@@ -918,8 +690,7 @@ def main() -> None:
             "last_generation",
             "appearances",
             "reward",
-            "distance",
-            "control_cost",
+            "param_count",
             "runtime_min",
             "submission_flag",
             "status",
@@ -939,8 +710,8 @@ def main() -> None:
             "invalid_count",
             "mean_reward_valid",
             "max_reward_valid",
-            "mean_distance_valid",
-            "min_control_cost_valid",
+            "min_param_count_valid",
+            "max_param_count_valid",
         ],
     )
     write_csv(
@@ -952,8 +723,7 @@ def main() -> None:
             "last_generation",
             "appearances",
             "reward",
-            "distance",
-            "control_cost",
+            "param_count",
             "runtime_min",
             "submission_flag",
             "status",
@@ -967,12 +737,12 @@ def main() -> None:
     report_text = build_markdown_report(logs, snapshot_records, unique_records, frontier, generation_summary)
     (OUTPUT_DIR / "evolution_report.md").write_text(report_text, encoding="utf-8")
     plot_pareto_figure(unique_records, frontier, OUTPUT_DIR / "evolution_pareto_plot.png")
-    plot_pareto_3d_figure(unique_records, frontier, OUTPUT_DIR / "evolution_pareto_plot_3d.png")
     plot_trend_figure(snapshot_records, unique_records, OUTPUT_DIR / "evolution_trend_plot.png")
-    plot_generation_3d_figure(snapshot_records, unique_records, OUTPUT_DIR / "evolution_generation_plot_3d.png")
     plot_combined_figure(snapshot_records, unique_records, frontier, OUTPUT_DIR / "evolution_combined_plot.png")
 
     print(f"Analyzed {len(snapshot_records)} population snapshot rows across {len(logs)} log files.")
+    print(f"Unique individuals: {len(unique_records)} total, {sum(1 for r in unique_records if r['is_valid'])} valid.")
+    print(f"Pareto frontier size: {len(frontier)}")
     print(f"Wrote outputs to: {OUTPUT_DIR}")
 
 

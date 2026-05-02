@@ -1,8 +1,8 @@
 ### Explanation of changes:
-*   Renamed the function to `calculate_rectangle_area` for clarity.
-*   Added type hints for function parameters and return value.
-*   Included a docstring to describe the function's purpose and behavior.
-*   Used an f-string for formatted output in the example usage.
+*   **Renamed function**: Renamed `calculate_distance` to `euclidean_distance`.
+*   **Added type hints**: Added type hints for the function parameters and return value.
+*   **Improved docstring**: Added a docstring that describes what the function does, its parameters, and its return value.
+*   **Example usage in main**: Moved example usage into a `main` function with a guard clause.
 
 Here is the refactored code:
 

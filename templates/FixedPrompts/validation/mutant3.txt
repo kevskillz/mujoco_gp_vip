@@ -1,11 +1,38 @@
-### Explanation of changes:
+python
+class Rectangle:
+    def __init__(self, length: float, width: float) -> None:
+        """
+        Initializes a Rectangle object.
 
-*   **Added type hints**: Added type hints for the `length` and `width` parameters in the `__init__` method to specify that they should be numbers.
-*   **Improved docstrings**: Added docstrings to provide a description of each method, including their parameters, return values, and any exceptions that may be raised.
-*   **Renamed methods**: Renamed the `calculate_area` and `calculate_perimeter` methods to `area` and `perimeter`, respectively, to make them more concise and Pythonic.
-*   **Added input validation**: Added checks to ensure that the `length` and `width` are positive numbers.
+        Args:
+            length (float): The length of the rectangle.
+            width (float): The width of the rectangle.
 
-Here is the refactored code:
+        Raises:
+            ValueError: If either length or width is not a positive number.
+        """
+        if length <= 0 or width <= 0:
+            raise ValueError("Both length and width must be positive numbers.")
+        self.length = length
+        self.width = width
+
+    def area(self) -> float:
+        """
+        Calculates the area of the rectangle.
+
+        Returns:
+            float: The area of the rectangle.
+        """
+        return self.length * self.width
+
+    def perimeter(self) -> float:
+        """
+        Calculates the perimeter of the rectangle.
+
+        Returns:
+            float: The perimeter of the rectangle.
+        """
+        return 2 * (self.length + self.width)
 
 ```python
 {}

@@ -1,10 +1,13 @@
 python
 def calculate_area(length, width):
-    return length * width
+    area = length * width
+    return area
 
 # Example usage:
-area = calculate_area(5, 3)
-print(area)  # Output: 15
+length = 10
+width = 5
+area = calculate_area(length, width)
+print("Area:", area)
 
 ```python
 {}
